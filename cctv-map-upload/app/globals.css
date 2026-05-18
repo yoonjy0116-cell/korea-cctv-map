@@ -145,7 +145,7 @@ h1 {
 }
 
 .resultHeader {
-  align-items: end;
+  align-items: flex-end;
   display: flex;
   justify-content: space-between;
   margin: 22px 0 12px;
@@ -154,6 +154,13 @@ h1 {
 .resultHeader span {
   color: var(--muted);
   font-size: 12px;
+}
+
+.dataMessage {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-bottom: 12px;
 }
 
 .list {
@@ -182,7 +189,7 @@ h1 {
 }
 
 .itemTop {
-  align-items: start;
+  align-items: flex-start;
   display: flex;
   gap: 10px;
   justify-content: space-between;

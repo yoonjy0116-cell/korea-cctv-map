@@ -18,26 +18,16 @@ export default function Home() {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const kakaoMapRef = useRef<KakaoMap | null>(null);
   const markersRef = useRef<any[]>([]);
+  const [locations, setLocations] = useState<CctvLocation[]>(cctvLocations);
   const [keyword, setKeyword] = useState("");
   const [purpose, setPurpose] = useState<(typeof purposes)[number]>("전체");
   const [selected, setSelected] = useState<CctvLocation | null>(cctvLocations[0]);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [dataMessage, setDataMessage] = useState("공공데이터를 불러오는 중입니다.");
   const [mapError, setMapError] = useState("");
 
-  const filteredLocations = useMemo(() => {
-    const normalizedKeyword = keyword.trim().toLowerCase();
-
-    return cctvLocations.filter((item) => {
-      const matchesKeyword =
-        !normalizedKeyword ||
-        item.address.toLowerCase().includes(normalizedKeyword) ||
-        item.region.toLowerCase().includes(normalizedKeyword) ||
-        item.name.toLowerCase().includes(normalizedKeyword);
-      const matchesPurpose = purpose === "전체" || item.purpose === purpose;
-
-      return matchesKeyword && matchesPurpose;
-    });
-  }, [keyword, purpose]);
+  const filteredLocations = useMemo(() => locations, [locations]);
 
   useEffect(() => {
     const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
@@ -63,6 +53,53 @@ export default function Home() {
     };
     document.head.appendChild(script);
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setIsDataLoading(true);
+      setDataMessage("공공데이터를 불러오는 중입니다.");
+
+      try {
+        const params = new URLSearchParams({
+          keyword,
+          purpose
+        });
+        const response = await fetch(`/api/cctv?${params.toString()}`, {
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error("공공데이터 응답 오류");
+        }
+
+        const data = await response.json();
+        const items = data.items as CctvLocation[];
+
+        setLocations(items);
+        setSelected(items[0] ?? null);
+        setDataMessage(
+          items.length >= data.maxResults
+            ? `공공데이터 결과를 ${data.maxResults.toLocaleString()}개까지 표시합니다.`
+            : "공공데이터를 기준으로 표시 중입니다."
+        );
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setLocations(cctvLocations);
+        setSelected(cctvLocations[0]);
+        setDataMessage("공공데이터 연결 실패로 예시 데이터를 표시합니다.");
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsDataLoading(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [keyword, purpose]);
 
   useEffect(() => {
     if (!isMapReady || !mapRef.current || !window.kakao) return;
@@ -159,8 +196,10 @@ export default function Home() {
 
         <div className="resultHeader">
           <strong>{filteredLocations.length.toLocaleString()}개 위치</strong>
-          <span>실시간 영상은 제공하지 않습니다</span>
+          <span>{isDataLoading ? "불러오는 중" : "실시간 영상 제외"}</span>
         </div>
+
+        <p className="dataMessage">{dataMessage}</p>
 
         <div className="list">
           {filteredLocations.map((item) => (
