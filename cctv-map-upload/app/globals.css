@@ -94,7 +94,7 @@ h1 {
   border-radius: 8px;
   display: flex;
   gap: 10px;
-  padding: 0 12px;
+  padding: 0 6px 0 12px;
 }
 
 .searchBox:focus-within {
@@ -107,6 +107,34 @@ h1 {
   height: 44px;
   outline: 0;
   width: 100%;
+}
+
+.searchButton {
+  background: var(--accent);
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-weight: 700;
+  height: 34px;
+  min-width: 58px;
+}
+
+.searchButton:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.searchButton svg {
+  animation: spin 0.9s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .filterBlock {
@@ -210,6 +238,49 @@ h1 {
 .listItem small {
   color: var(--muted);
   line-height: 1.45;
+}
+
+.emptyState {
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  line-height: 1.5;
+  padding: 18px;
+  text-align: center;
+}
+
+.markerInfo {
+  display: grid;
+  gap: 5px;
+  max-width: 260px;
+  padding: 12px;
+}
+
+.markerInfo strong {
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.markerInfo span,
+.markerInfo small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.markerInfo a {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 7px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  justify-content: center;
+  margin-top: 4px;
+  min-height: 30px;
+  text-decoration: none;
 }
 
 .mapArea {
@@ -353,6 +424,29 @@ dd {
   padding: 20px;
 }
 
+.seoTextBlock {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 20px;
+}
+
+.seoTextBlock h2 {
+  font-size: 21px;
+  margin: 0 0 12px;
+}
+
+.seoTextBlock p {
+  color: #36464f;
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+
+.seoTextBlock p:last-child {
+  margin-bottom: 0;
+}
+
 .detailGrid,
 .rawGrid {
   display: grid;
@@ -381,30 +475,125 @@ dd {
 
 @media (max-width: 860px) {
   .page {
-    grid-template-columns: 1fr;
+    display: block;
+    min-height: 100dvh;
   }
 
   .sidebar {
-    border-bottom: 1px solid var(--line);
+    border: 1px solid var(--line);
+    border-bottom: 0;
     border-right: 0;
-    max-height: 52vh;
-    padding: 18px;
+    border-radius: 14px 14px 0 0;
+    bottom: 0;
+    box-shadow: 0 -18px 35px rgba(23, 32, 38, 0.16);
+    left: 0;
+    max-height: 48dvh;
+    min-height: 0;
+    padding: 14px;
+    position: fixed;
+    right: 0;
+    z-index: 20;
   }
 
-  .mapArea,
-  .mapCanvas {
-    min-height: 48vh;
+  .brand {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .brandIcon {
+    height: 38px;
+    width: 38px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+  }
+
+  h1 {
+    font-size: 19px;
+  }
+
+  .controls {
+    gap: 10px;
+  }
+
+  .searchBox input {
+    font-size: 14px;
+  }
+
+  .filterTitle {
+    display: none;
   }
 
   .purposeGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .purposeGrid button {
+    flex: 0 0 auto;
+    min-height: 34px;
+    min-width: 82px;
+    padding: 0 12px;
+  }
+
+  .resultHeader {
+    margin: 12px 0 6px;
+  }
+
+  .dataMessage {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .list {
+    gap: 8px;
+  }
+
+  .listItem {
+    gap: 5px;
+    padding: 11px;
+  }
+
+  .mapArea {
+    inset: 0;
+    min-height: 100dvh;
+    position: fixed;
+    z-index: 1;
+  }
+
+  .mapCanvas {
+    min-height: 100dvh;
+  }
+
+  .mapNotice {
+    top: 32%;
   }
 
   .detailPanel {
-    bottom: 14px;
-    left: 14px;
-    right: 14px;
+    bottom: calc(48dvh + 12px);
+    left: 12px;
+    max-height: 30dvh;
+    overflow: auto;
+    padding: 14px;
+    right: 12px;
     width: auto;
+    z-index: 15;
+  }
+
+  .detailPanel h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .detailPanel dl {
+    gap: 8px;
+  }
+
+  .detailLink {
+    min-height: 38px;
   }
 
   .detailGrid,

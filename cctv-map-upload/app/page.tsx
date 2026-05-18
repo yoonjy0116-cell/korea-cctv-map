@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Cctv, Filter, MapPin, Search } from "lucide-react";
-import { cctvLocations, type CctvLocation } from "@/data/cctvLocations";
+import { Cctv, Filter, Loader2, MapPin, Search } from "lucide-react";
+import { cctvLocations, type CctvLocation } from "../data/cctvLocations";
 
 type KakaoMap = any;
 
@@ -15,11 +15,22 @@ declare global {
 
 const purposes = ["전체", "방범", "어린이보호", "교통", "시설안전"] as const;
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 export default function Home() {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const kakaoMapRef = useRef<KakaoMap | null>(null);
   const markersRef = useRef<any[]>([]);
+  const infoWindowRef = useRef<any | null>(null);
   const [locations, setLocations] = useState<CctvLocation[]>(cctvLocations);
+  const [keywordInput, setKeywordInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const [purpose, setPurpose] = useState<(typeof purposes)[number]>("전체");
   const [selected, setSelected] = useState<CctvLocation | null>(cctvLocations[0]);
@@ -29,6 +40,32 @@ export default function Home() {
   const [mapError, setMapError] = useState("");
 
   const filteredLocations = useMemo(() => locations, [locations]);
+
+  const openInfoWindow = (item: CctvLocation, position: any) => {
+    if (!kakaoMapRef.current || !window.kakao) return;
+
+    const detailUrl = item.managementNumber
+      ? `/cctv/${encodeURIComponent(item.managementNumber)}`
+      : "/";
+    const content = `
+      <div class="markerInfo">
+        <strong>${escapeHtml(item.name)}</strong>
+        <span>${escapeHtml(item.address)}</span>
+        <small>카메라 ${item.cameraCount}대 · ${escapeHtml(item.purpose)}</small>
+        ${item.managementNumber ? `<a href="${detailUrl}">자세히 보기</a>` : ""}
+      </div>
+    `;
+
+    if (!infoWindowRef.current) {
+      infoWindowRef.current = new window.kakao.maps.InfoWindow({
+        removable: true
+      });
+    }
+
+    infoWindowRef.current.setContent(content);
+    infoWindowRef.current.setPosition(position);
+    infoWindowRef.current.open(kakaoMapRef.current);
+  };
 
   useEffect(() => {
     const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
@@ -59,7 +96,7 @@ export default function Home() {
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setIsDataLoading(true);
-      setDataMessage("공공데이터를 불러오는 중입니다.");
+      setDataMessage(keyword ? `"${keyword}" 검색 결과를 불러오는 중입니다.` : "공공데이터를 불러오는 중입니다.");
 
       try {
         const params = new URLSearchParams({
@@ -102,6 +139,11 @@ export default function Home() {
     };
   }, [keyword, purpose]);
 
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setKeyword(keywordInput.trim());
+  };
+
   useEffect(() => {
     if (!isMapReady || !mapRef.current || !window.kakao) return;
 
@@ -131,6 +173,7 @@ export default function Home() {
       window.kakao.maps.event.addListener(marker, "click", () => {
         setSelected(item);
         kakaoMapRef.current.panTo(position);
+        openInfoWindow(item, position);
       });
 
       markersRef.current.push(marker);
@@ -150,6 +193,7 @@ export default function Home() {
     const position = new window.kakao.maps.LatLng(item.lat, item.lng);
     kakaoMapRef.current.panTo(position);
     kakaoMapRef.current.setLevel(4);
+    openInfoWindow(item, position);
   };
 
   return (
@@ -165,14 +209,17 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="controls">
+        <form className="controls" onSubmit={handleSearch}>
           <label className="searchBox">
             <Search size={18} aria-hidden="true" />
             <input
-              value={keyword}
-              onChange={(event) => setKeyword(event.target.value)}
-              placeholder="지역, 주소, CCTV명 검색"
+              value={keywordInput}
+              onChange={(event) => setKeywordInput(event.target.value)}
+              placeholder="예: 서울, 해운대구, 세종대로"
             />
+            <button className="searchButton" disabled={isDataLoading} type="submit">
+              {isDataLoading ? <Loader2 size={17} aria-hidden="true" /> : "검색"}
+            </button>
           </label>
 
           <div className="filterBlock">
@@ -193,7 +240,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </div>
+        </form>
 
         <div className="resultHeader">
           <strong>{filteredLocations.length.toLocaleString()}개 위치</strong>
@@ -203,6 +250,9 @@ export default function Home() {
         <p className="dataMessage">{dataMessage}</p>
 
         <div className="list">
+          {filteredLocations.length === 0 && !isDataLoading && (
+            <div className="emptyState">검색 결과가 없습니다. 지역명이나 도로명을 바꿔서 검색해보세요.</div>
+          )}
           {filteredLocations.map((item) => (
             <button
               className={`listItem ${selected?.id === item.id ? "selected" : ""}`}

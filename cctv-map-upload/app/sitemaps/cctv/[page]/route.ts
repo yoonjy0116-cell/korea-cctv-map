@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCctvIds } from "@/lib/cctvData";
+import { getCctvIds } from "../../../../lib/cctvData";
 
 export const runtime = "nodejs";
 export const revalidate = 86400;

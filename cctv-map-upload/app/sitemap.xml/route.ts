@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { countCctvRows } from "@/lib/cctvData";
+import { countCctvRows } from "../../lib/cctvData";
 
 export const runtime = "nodejs";
 export const revalidate = 86400;
