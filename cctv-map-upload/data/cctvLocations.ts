@@ -1,7 +1,7 @@
 export type CctvPurpose = "방범" | "어린이보호" | "교통" | "시설안전";
 
 export type CctvLocation = {
-  id: number;
+  id: string | number;
   name: string;
   region: string;
   address: string;
@@ -10,6 +10,7 @@ export type CctvLocation = {
   manager: string;
   lat: number;
   lng: number;
+  managementNumber?: string;
 };
 
 export const cctvLocations: CctvLocation[] = [

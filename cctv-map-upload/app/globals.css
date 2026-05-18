@@ -270,6 +270,19 @@ h1 {
   margin-bottom: 16px;
 }
 
+.detailLink {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 8px;
+  color: #fff;
+  display: flex;
+  font-weight: 700;
+  justify-content: center;
+  margin-top: 16px;
+  min-height: 42px;
+  text-decoration: none;
+}
+
 dl {
   display: grid;
   gap: 12px;
@@ -289,6 +302,80 @@ dt {
 
 dd {
   line-height: 1.45;
+  margin: 0;
+}
+
+.detailPage {
+  background: var(--soft);
+  min-height: 100vh;
+  padding: 32px 18px;
+}
+
+.detailShell {
+  margin: 0 auto;
+  max-width: 980px;
+}
+
+.backLink {
+  align-items: center;
+  color: var(--accent);
+  display: inline-flex;
+  font-weight: 700;
+  gap: 6px;
+  margin-bottom: 18px;
+  text-decoration: none;
+}
+
+.detailHero {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.detailHero h1 {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.detailHero p:last-child {
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 0;
+}
+
+.detailGrid,
+.rawBlock {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 20px;
+}
+
+.detailGrid,
+.rawGrid {
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.infoRow {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 5px;
+  padding: 13px 8px;
+}
+
+.sectionHeading {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sectionHeading h2 {
+  font-size: 20px;
   margin: 0;
 }
 
@@ -318,5 +405,14 @@ dd {
     left: 14px;
     right: 14px;
     width: auto;
+  }
+
+  .detailGrid,
+  .rawGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .detailHero h1 {
+    font-size: 24px;
   }
 }

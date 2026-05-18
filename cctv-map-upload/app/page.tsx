@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { Cctv, Filter, MapPin, Search } from "lucide-react";
 import { cctvLocations, type CctvLocation } from "@/data/cctvLocations";
 
@@ -215,8 +216,11 @@ export default function Home() {
               </span>
               <span>{item.address}</span>
               <small>
-                카메라 {item.cameraCount}대 · {item.region}
+                카메라 {item.cameraCount}대 · {item.manager}
               </small>
+              {item.managementNumber && (
+                <small>관리번호 {item.managementNumber}</small>
+              )}
             </button>
           ))}
         </div>
@@ -239,6 +243,12 @@ export default function Home() {
               <h2>{selected.name}</h2>
             </div>
             <dl>
+              {selected.managementNumber && (
+                <div>
+                  <dt>관리번호</dt>
+                  <dd>{selected.managementNumber}</dd>
+                </div>
+              )}
               <div>
                 <dt>주소</dt>
                 <dd>{selected.address}</dd>
@@ -256,6 +266,11 @@ export default function Home() {
                 <dd>{selected.manager}</dd>
               </div>
             </dl>
+            {selected.managementNumber && (
+              <Link className="detailLink" href={`/cctv/${encodeURIComponent(selected.managementNumber)}`}>
+                전체 상세정보 보기
+              </Link>
+            )}
           </aside>
         )}
       </section>
