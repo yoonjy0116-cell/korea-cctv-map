@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { gunzip } from "node:zlib";
+import { promisify } from "node:util";
 
 export const runtime = "nodejs";
 export const revalidate = 86400;
 
 const DATA_URL = "https://file.localdata.go.kr/file/cctv_info/info";
+const LOCAL_DATA_PATH = path.join(process.cwd(), "public", "data", "cctv.csv");
+const LOCAL_GZIP_DATA_PATH = path.join(process.cwd(), "public", "data", "cctv.csv.gz");
 const MAX_RESULTS = 500;
+const gunzipAsync = promisify(gunzip);
 
 type RawRecord = Record<string, string>;
 
@@ -76,20 +83,34 @@ export async function GET(request: NextRequest) {
   const purpose = request.nextUrl.searchParams.get("purpose")?.trim() ?? "전체";
 
   try {
-    const response = await fetch(DATA_URL, { next: { revalidate } });
-    if (!response.ok) {
-      throw new Error(`Public data request failed: ${response.status}`);
+    let text = "";
+
+    try {
+      const localBuffer = await readFile(LOCAL_DATA_PATH);
+      text = new TextDecoder("euc-kr").decode(localBuffer);
+    } catch {
+      try {
+        const gzipBuffer = await readFile(LOCAL_GZIP_DATA_PATH);
+        const localBuffer = await gunzipAsync(gzipBuffer);
+        text = new TextDecoder("euc-kr").decode(localBuffer);
+      } catch {
+        const response = await fetch(DATA_URL, { next: { revalidate } });
+        if (!response.ok) {
+          throw new Error(`Public data request failed: ${response.status}`);
+        }
+
+        const buffer = await response.arrayBuffer();
+        text = new TextDecoder("euc-kr").decode(buffer);
+      }
     }
 
-    const buffer = await response.arrayBuffer();
-    const text = new TextDecoder("euc-kr").decode(buffer);
     const [headers = [], ...rows] = parseCsv(text);
     const results = [];
 
     for (const row of rows) {
       const record = Object.fromEntries(headers.map((header, index) => [header.trim(), row[index] ?? ""]));
-      const lat = Number(pick(record, ["위도", "위도좌표", "latitude"]));
-      const lng = Number(pick(record, ["경도", "경도좌표", "longitude"]));
+      const lat = Number(pick(record, ["WGS84위도", "위도", "위도좌표", "latitude"]));
+      const lng = Number(pick(record, ["WGS84경도", "경도", "경도좌표", "longitude"]));
 
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
 
