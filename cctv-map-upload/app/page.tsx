@@ -44,7 +44,6 @@ export default function Home() {
   const [mapError, setMapError] = useState("");
   const [locationLabel, setLocationLabel] = useState("서울시청 주변");
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
-  const [searchPlaceholder, setSearchPlaceholder] = useState("서울시청, 해운대구");
 
   const filteredLocations = useMemo(() => locations, [locations]);
 
@@ -235,17 +234,6 @@ export default function Home() {
           kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(nextCenter.lat, nextCenter.lng));
         }
 
-        const geocoder = window.kakao?.maps?.services
-          ? new window.kakao.maps.services.Geocoder()
-          : null;
-
-        geocoder?.coord2RegionCode(nextCenter.lng, nextCenter.lat, (result: any[], status: string) => {
-          if (status !== window.kakao.maps.services.Status.OK) return;
-          const town = result.find((item) => item.region_type === "H")?.region_3depth_name;
-          if (town) {
-            setSearchPlaceholder(`${town}, 서울시청, 해운대구`);
-          }
-        });
       },
       () => {
         setLoadMode("nearby");
@@ -382,7 +370,7 @@ export default function Home() {
               onFocus={() => setIsPanelExpanded(true)}
               value={keywordInput}
               onChange={(event) => setKeywordInput(event.target.value)}
-              placeholder={`예: ${searchPlaceholder}`}
+              placeholder="CCTV 설치 지역 검색"
             />
             <button className="searchButton" disabled={isDataLoading} type="submit">
               {isDataLoading ? <Loader2 size={17} aria-hidden="true" /> : "검색"}
