@@ -211,13 +211,16 @@ h1 {
 
 .list {
   display: grid;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   gap: 10px;
   min-height: 0;
-  overflow: auto;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: scroll;
   overscroll-behavior: contain;
   padding-right: 4px;
   scrollbar-gutter: stable;
+  touch-action: pan-y;
 }
 
 .listItem {
@@ -930,6 +933,7 @@ dd {
   }
 
   .adSlotSidebar {
+    display: none;
     min-height: 64px;
     margin-top: 10px;
   }
@@ -944,8 +948,10 @@ dd {
   }
 
   .list {
+    flex: 1 1 0;
     gap: 8px;
     min-height: 110px;
+    overflow-y: scroll;
   }
 
   .listItem {

@@ -18,6 +18,7 @@ declare global {
 const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 const purposes = ["전체", "방범", "교통", "어린이보호", "시설안전", "기타"] as const;
 const ENABLE_TRAFFIC_CCTV = process.env.NEXT_PUBLIC_ENABLE_TRAFFIC_CCTV === "true";
+const MIN_VISIBLE_MAP_LEVEL = 8;
 
 function getMapStartFromUrl() {
   if (typeof window === "undefined") return null;
@@ -45,6 +46,13 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#039;");
 }
 
+function getSearchMapLevel(query: string) {
+  if (/(특별시|광역시|특별자치시|도)$/.test(query)) return 8;
+  if (/(시|군|구)$/.test(query)) return 6;
+  if (/(읍|면|동|가|리)$/.test(query)) return 4;
+  return 4;
+}
+
 export default function Home() {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const kakaoMapRef = useRef<KakaoMap | null>(null);
@@ -63,7 +71,7 @@ export default function Home() {
   const [mapError, setMapError] = useState("");
   const [locationLabel, setLocationLabel] = useState("서울시청 주변");
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
-  const [searchPlaceholder, setSearchPlaceholder] = useState("강남구, 해운대구");
+  const searchPlaceholder = "강남구, 해운대구";
 
   const filteredLocations = useMemo(() => locations, [locations]);
 
@@ -132,11 +140,13 @@ export default function Home() {
       level: 4
     });
 
-    window.setTimeout(() => {
-      if (!kakaoMapRef.current || !window.kakao) return;
-      kakaoMapRef.current.relayout();
-      kakaoMapRef.current.setCenter(center);
-    }, 60);
+    [0, 80, 250, 700, 1300].forEach((delay) => {
+      window.setTimeout(() => {
+        if (!kakaoMapRef.current || !window.kakao) return;
+        kakaoMapRef.current.relayout();
+        kakaoMapRef.current.setCenter(center);
+      }, delay);
+    });
 
     if (start) {
       setLoadMode("search");
@@ -159,6 +169,16 @@ export default function Home() {
 
       timer = window.setTimeout(async () => {
         const map = kakaoMapRef.current;
+        const mapLevel = map.getLevel();
+        if (mapLevel >= MIN_VISIBLE_MAP_LEVEL) {
+          setIsDataLoading(false);
+          setLocations([]);
+          setSelected(null);
+          infoWindowRef.current?.close();
+          setDataMessage("지도가 너무 넓게 축소되어 있습니다. CCTV 위치를 보려면 지도를 조금 확대해 주세요.");
+          return;
+        }
+
         const bounds = map.getBounds();
         const sw = bounds.getSouthWest();
         const ne = bounds.getNorthEast();
@@ -271,17 +291,6 @@ export default function Home() {
           kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(nextCenter.lat, nextCenter.lng));
         }
 
-        const geocoder = window.kakao?.maps?.services
-          ? new window.kakao.maps.services.Geocoder()
-          : null;
-
-        geocoder?.coord2RegionCode(nextCenter.lng, nextCenter.lat, (result: any[], status: string) => {
-          if (status !== window.kakao.maps.services.Status.OK) return;
-          const town = result.find((item) => item.region_type === "H")?.region_3depth_name;
-          if (town) {
-            setSearchPlaceholder(`${town}, 강남구, 해운대구`);
-          }
-        });
       },
       () => {
         setLoadMode("nearby");
@@ -316,45 +325,47 @@ export default function Home() {
     }
 
     const places = new window.kakao.maps.services.Places();
+    const geocoder = new window.kakao.maps.services.Geocoder();
     setIsDataLoading(true);
     setDataMessage(`${query} 위치를 카카오 지도에서 찾는 중입니다.`);
 
-    places.keywordSearch(query, (result: any[], status: string) => {
-      if (status !== window.kakao.maps.services.Status.OK || !result[0]) {
-        setIsDataLoading(false);
-        setDataMessage("검색한 지역을 찾지 못했습니다. 동 이름이나 주소를 조금 더 구체적으로 입력해 주세요.");
-        return;
-      }
-
-      const validResults = result
-        .map((item) => ({
-          lat: Number(item.y),
-          lng: Number(item.x)
-        }))
-        .filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lng))
-        .slice(0, 12);
-
-      if (validResults.length === 0) {
-        setIsDataLoading(false);
-        setDataMessage("검색한 지역의 지도 좌표를 찾지 못했습니다.");
-        return;
-      }
-
+    const moveSearchMap = (lat: number, lng: number, level = getSearchMapLevel(query)) => {
       setLoadMode("search");
       setLocationLabel(query);
       setIsPanelExpanded(false);
       kakaoMapRef.current.relayout();
+      kakaoMapRef.current.setLevel(level);
+      kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(lat, lng));
+    };
 
-      if (validResults.length >= 2) {
-        const bounds = new window.kakao.maps.LatLngBounds();
-        validResults.forEach((item) => {
-          bounds.extend(new window.kakao.maps.LatLng(item.lat, item.lng));
-        });
-        kakaoMapRef.current.setBounds(bounds);
-      } else {
-        kakaoMapRef.current.setLevel(4);
-        kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(validResults[0].lat, validResults[0].lng));
+    const searchByKeyword = () => {
+      places.keywordSearch(query, (result: any[], status: string) => {
+        if (status !== window.kakao.maps.services.Status.OK || !result[0]) {
+          setIsDataLoading(false);
+          setDataMessage("검색한 지역을 찾지 못했습니다. 지역명이나 주소를 조금 더 구체적으로 입력해 주세요.");
+          return;
+        }
+
+        const first = result.find((item) => Number.isFinite(Number(item.y)) && Number.isFinite(Number(item.x)));
+        if (!first) {
+          setIsDataLoading(false);
+          setDataMessage("검색한 지역의 지도 좌표를 찾지 못했습니다.");
+          return;
+        }
+
+        moveSearchMap(Number(first.y), Number(first.x), getSearchMapLevel(query));
+      });
+    };
+
+    geocoder.addressSearch(query, (result: any[], status: string) => {
+      const first = result?.find((item) => Number.isFinite(Number(item.y)) && Number.isFinite(Number(item.x)));
+
+      if (status === window.kakao.maps.services.Status.OK && first) {
+        moveSearchMap(Number(first.y), Number(first.x), getSearchMapLevel(query));
+        return;
       }
+
+      searchByKeyword();
     });
   };
 
