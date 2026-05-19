@@ -46,14 +46,14 @@ export default function Home() {
   const openInfoWindow = (item: CctvLocation, position: any) => {
     if (!kakaoMapRef.current || !window.kakao) return;
 
-    const detailUrl = item.managementNumber
-      ? `/cctv/${encodeURIComponent(item.managementNumber)}`
+    const detailUrl = item.slug
+      ? `/cctv/${encodeURIComponent(item.slug)}`
       : "/";
     const content = `
       <div class="markerInfo">
         <strong>${escapeHtml(item.name)}</strong>
         <span>${escapeHtml(item.address)}</span>
-        <small>${escapeHtml(item.purpose)} · 카메라 ${item.cameraCount}대</small>
+        <small>${escapeHtml(item.direction || "촬영방면정보 없음")}</small>
         ${item.managementNumber ? `<a href="${detailUrl}">자세히 보기</a>` : ""}
       </div>
     `;
@@ -314,7 +314,7 @@ export default function Home() {
               </div>
             </dl>
             {selected.managementNumber && (
-              <Link className="detailLink" href={`/cctv/${encodeURIComponent(selected.managementNumber)}`}>
+              <Link className="detailLink" href={`/cctv/${encodeURIComponent(selected.slug ?? selected.managementNumber)}`}>
                 자세히 보기
               </Link>
             )}

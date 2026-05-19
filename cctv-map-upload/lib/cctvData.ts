@@ -17,6 +17,7 @@ export type RawCctvRecord = Record<string, string>;
 export type CctvDetail = CctvLocation & {
   seoArea: string;
   seoTitle: string;
+  slug: string;
   managementNumber: string;
   roadAddress: string;
   lotAddress: string;
@@ -104,7 +105,28 @@ export function createSeoArea(record: RawCctvRecord) {
     return [city, district, dong].filter(Boolean).join(" ");
   }
 
-  return parts.slice(0, 3).join(" ") || pick(record, ["관리기관명"]) || "전국";
+  return normalizeArea(parts.slice(0, 3).join(" ") || pick(record, ["관리기관명"]) || "전국");
+}
+
+export function normalizeArea(value: string) {
+  const parts = value.split(/\s+/).filter(Boolean);
+  const normalized: string[] = [];
+
+  for (const part of parts) {
+    if (normalized[normalized.length - 1] !== part) {
+      normalized.push(part);
+    }
+  }
+
+  return normalized.join(" ");
+}
+
+export function createSlug(value: string, managementNumber: string) {
+  return `${value} ${managementNumber}`
+    .trim()
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 }
 
 export function createDisplayName(record: RawCctvRecord) {
@@ -125,13 +147,15 @@ export function toCctvDetail(record: RawCctvRecord): CctvDetail | null {
   const address = roadAddress || lotAddress || pick(record, ["주소", "설치위치"]) || "주소 정보 없음";
   const manager = pick(record, ["관리기관명", "제공기관명"]) || "관리기관 정보 없음";
   const seoArea = createSeoArea(record);
+  const seoTitle = `${seoArea} CCTV 위치 정보`;
 
   return {
     id: managementNumber,
     managementNumber,
     name: createDisplayName(record),
     seoArea,
-    seoTitle: `${seoArea} CCTV 위치 정보`,
+    seoTitle,
+    slug: createSlug(seoTitle, managementNumber),
     region: manager,
     address,
     roadAddress,
@@ -191,8 +215,11 @@ export async function findCctvByManagementNumber(managementNumber: string) {
   const rows = await getCctvRows();
 
   for (const record of rows) {
-    if (pick(record, ["관리번호"]) === managementNumber) {
-      return toCctvDetail(record);
+    const item = toCctvDetail(record);
+    if (!item) continue;
+
+    if (item.managementNumber === managementNumber || item.slug === managementNumber) {
+      return item;
     }
   }
 
@@ -206,6 +233,15 @@ export async function getCctvIds(offset = 0, limit = 50000) {
     .slice(offset, offset + limit)
     .map((record) => pick(record, ["관리번호"]))
     .filter(Boolean);
+}
+
+export async function getCctvPageSlugs(offset = 0, limit = 50000) {
+  const rows = await getCctvRows();
+
+  return rows
+    .slice(offset, offset + limit)
+    .map((record) => toCctvDetail(record)?.slug)
+    .filter(Boolean) as string[];
 }
 
 export async function countCctvRows() {

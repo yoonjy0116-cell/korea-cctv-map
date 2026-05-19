@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCctvIds } from "../../../../lib/cctvData";
+import { getCctvPageSlugs } from "../../../../lib/cctvData";
 
 export const runtime = "nodejs";
 export const revalidate = 86400;
@@ -31,10 +31,10 @@ export async function GET(_request: NextRequest, { params }: Props) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const ids = await getCctvIds(pageNumber * SITEMAP_SIZE, SITEMAP_SIZE);
-  const urls = ids
-    .map((id) => {
-      const loc = `${SITE_URL}/cctv/${encodeURIComponent(id)}`;
+  const slugs = await getCctvPageSlugs(pageNumber * SITEMAP_SIZE, SITEMAP_SIZE);
+  const urls = slugs
+    .map((slug) => {
+      const loc = `${SITE_URL}/cctv/${encodeURIComponent(slug)}`;
       return `<url><loc>${escapeXml(loc)}</loc></url>`;
     })
     .join("");

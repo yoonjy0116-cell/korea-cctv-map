@@ -33,7 +33,9 @@ input {
 .page {
   display: grid;
   grid-template-columns: 420px minmax(0, 1fr);
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -41,7 +43,9 @@ input {
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
+  height: 100dvh;
   min-height: 0;
+  overflow: hidden;
   padding: 24px;
 }
 
@@ -251,10 +255,11 @@ h1 {
 
 .markerInfo {
   display: grid;
-  gap: 4px;
-  max-width: 220px;
-  min-width: 180px;
-  padding: 10px;
+  gap: 5px;
+  max-width: 216px;
+  min-width: 176px;
+  padding: 10px 11px 11px;
+  position: relative;
 }
 
 .markerInfo strong {
@@ -281,10 +286,21 @@ h1 {
   justify-content: center;
   margin-top: 4px;
   max-width: 100%;
-  min-height: 30px;
-  padding: 0 10px;
+  min-height: 32px;
+  padding: 0 12px;
   text-decoration: none;
   width: max-content;
+}
+
+.markerInfo::after {
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid #fff;
+  bottom: -8px;
+  content: "";
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
 }
 
 .adSlot {
@@ -469,6 +485,8 @@ dd {
 
 .detailActions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 18px;
 }
 
@@ -483,6 +501,55 @@ dd {
   min-height: 42px;
   padding: 0 16px;
   text-decoration: none;
+}
+
+.detailActionSecondary {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  display: inline-flex;
+  font-weight: 700;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
+.requestSteps {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.requestStep {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(260px, 1.1fr);
+  padding: 18px;
+}
+
+.requestStep h2 {
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+
+.requestStep p {
+  color: #36464f;
+  line-height: 1.65;
+  margin-bottom: 0;
+}
+
+.requestStep img {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  height: auto;
+  width: 100%;
 }
 
 .sourceBlock {
@@ -678,5 +745,21 @@ dd {
 
   .detailHero h1 {
     font-size: 24px;
+  }
+
+  .detailActions {
+    display: grid;
+    gap: 8px;
+  }
+
+  .detailActionPrimary,
+  .detailActionSecondary {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .requestStep {
+    grid-template-columns: 1fr;
+    padding: 14px;
   }
 }

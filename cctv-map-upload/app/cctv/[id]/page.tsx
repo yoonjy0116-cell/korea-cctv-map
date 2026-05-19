@@ -45,12 +45,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       "공공데이터 CCTV"
     ],
     alternates: {
-      canonical: `/cctv/${encodeURIComponent(item.managementNumber)}`
+      canonical: `/cctv/${encodeURIComponent(item.slug)}`
     },
     openGraph: {
       title,
       description,
-      url: `/cctv/${encodeURIComponent(item.managementNumber)}`,
+      url: `/cctv/${encodeURIComponent(item.slug)}`,
       type: "article",
       locale: "ko_KR"
     }
@@ -63,8 +63,8 @@ export default async function CctvDetailPage({ params }: Props) {
 
   if (!item) notFound();
 
-  const pageUrl = `https://cctv.idlun.com/cctv/${encodeURIComponent(item.managementNumber)}`;
-  const title = `${item.seoArea} CCTV 위치 정보`;
+  const pageUrl = `https://cctv.idlun.com/cctv/${encodeURIComponent(item.slug)}`;
+  const title = item.seoTitle;
   const description = `${item.seoArea} CCTV 위치와 관리 정보를 공공데이터 기준으로 정리한 상세 페이지입니다.`;
   const structuredData = {
     "@context": "https://schema.org",
