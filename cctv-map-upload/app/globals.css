@@ -347,6 +347,30 @@ h1 {
   width: 100%;
 }
 
+.mapLocateButton {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(23, 32, 38, 0.14);
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 700;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  z-index: 10;
+}
+
+.mapLocateButton:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .mapNotice {
   align-items: center;
   background: #fff;
@@ -834,6 +858,11 @@ dd {
 
   .mapNotice {
     top: 32%;
+  }
+
+  .mapLocateButton {
+    right: 12px;
+    top: 12px;
   }
 
   .detailPanel {

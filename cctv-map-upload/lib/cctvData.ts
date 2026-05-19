@@ -259,6 +259,50 @@ export async function loadNearbyTiles(lat: number, lng: number, radius = 1) {
   return chunks.flat();
 }
 
+export async function loadCctvsInBounds(bounds: {
+  swLat: number;
+  swLng: number;
+  neLat: number;
+  neLng: number;
+}) {
+  const minLatTile = Math.floor(bounds.swLat * TILE_SCALE);
+  const maxLatTile = Math.floor(bounds.neLat * TILE_SCALE);
+  const minLngTile = Math.floor(bounds.swLng * TILE_SCALE);
+  const maxLngTile = Math.floor(bounds.neLng * TILE_SCALE);
+  const tileCount = (maxLatTile - minLatTile + 1) * (maxLngTile - minLngTile + 1);
+
+  if (tileCount > 90) {
+    const centerLat = (bounds.swLat + bounds.neLat) / 2;
+    const centerLng = (bounds.swLng + bounds.neLng) / 2;
+    return loadNearbyTiles(centerLat, centerLng, 2);
+  }
+
+  const tasks: Promise<CctvLocation[]>[] = [];
+
+  for (let y = minLatTile; y <= maxLatTile; y += 1) {
+    for (let x = minLngTile; x <= maxLngTile; x += 1) {
+      const filePath = path.join(TILE_DIR, `t_${y}_${x}.json.gz`);
+      tasks.push(
+        readFile(filePath)
+          .then(gunzipAsync)
+          .then((buffer) => JSON.parse(buffer.toString("utf8")) as CctvLocation[])
+          .catch(() => [])
+      );
+    }
+  }
+
+  const chunks = await Promise.all(tasks);
+  return chunks
+    .flat()
+    .filter(
+      (item) =>
+        item.lat >= bounds.swLat &&
+        item.lat <= bounds.neLat &&
+        item.lng >= bounds.swLng &&
+        item.lng <= bounds.neLng
+    );
+}
+
 export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const earth = 6371000;
   const toRad = (value: number) => (value * Math.PI) / 180;
