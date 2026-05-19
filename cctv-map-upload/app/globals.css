@@ -18,6 +18,7 @@ html,
 body {
   height: 100%;
   margin: 0;
+  overflow: hidden;
 }
 
 body {
@@ -43,9 +44,10 @@ input {
 .sidebar {
   background: var(--panel);
   border-right: 1px solid var(--line);
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   height: 100dvh;
+  max-height: 100dvh;
   min-height: 0;
   overflow: hidden;
   padding: 24px;
@@ -195,7 +197,9 @@ h1 {
 
 .resultsPanel {
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
+  height: 0;
   min-height: 0;
   overflow: hidden;
 }
@@ -231,6 +235,7 @@ h1 {
   padding-right: 4px;
   scrollbar-gutter: stable;
   touch-action: pan-y;
+  width: 100%;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -246,8 +251,10 @@ h1 {
   cursor: pointer;
   display: grid;
   gap: 7px;
+  max-width: 100%;
   padding: 14px;
   text-align: left;
+  width: 100%;
 }
 
 .inlineExternalLink {
@@ -268,6 +275,13 @@ h1 {
   display: flex;
   gap: 10px;
   justify-content: space-between;
+  min-width: 0;
+  width: 100%;
+}
+
+.itemTop strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .itemTop em {
@@ -848,8 +862,8 @@ dd {
     bottom: 0;
     box-shadow: 0 -18px 35px rgba(23, 32, 38, 0.16);
     left: 0;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
     height: 42dvh;
     max-height: min(42dvh, calc(100dvh - 12px));
     min-height: 0;
@@ -974,6 +988,7 @@ dd {
   .list {
     flex: 1 1 auto;
     min-height: 0;
+    max-height: 100%;
     overflow-y: auto;
   }
 

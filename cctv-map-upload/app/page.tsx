@@ -87,6 +87,33 @@ export default function Home() {
     });
   }, []);
 
+  const refreshRoadmapTiles = useCallback(() => {
+    if (!kakaoMapRef.current || !mapRef.current || !window.kakao) return;
+
+    const map = kakaoMapRef.current;
+    const center = map.getCenter();
+    const level = map.getLevel();
+    const tileImages = Array.from(mapRef.current.querySelectorAll("img"));
+    const onlyWhiteTiles =
+      tileImages.length > 0 &&
+      tileImages
+        .filter((image) => image.width >= 128 || image.height >= 128)
+        .every((image) => image.src.includes("/white.png"));
+
+    map.setMapTypeId(window.kakao.maps.MapTypeId.ROADMAP);
+    map.relayout();
+    map.setCenter(center);
+
+    if (onlyWhiteTiles) {
+      map.setLevel(Math.min(level + 1, 14), { animate: false });
+      window.setTimeout(() => {
+        if (!kakaoMapRef.current) return;
+        kakaoMapRef.current.setLevel(level, { animate: false });
+        kakaoMapRef.current.setCenter(center);
+      }, 80);
+    }
+  }, []);
+
   const closeMapInfo = () => {
     infoWindowRef.current?.close();
     setSelected(null);
@@ -195,14 +222,18 @@ export default function Home() {
 
       kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
         center,
-        level: 4
+        level: 4,
+        mapTypeId: window.kakao.maps.MapTypeId.ROADMAP
       });
 
-      resizeObserver = new ResizeObserver(() => relayoutMap(center));
+      resizeObserver = new ResizeObserver(() => relayoutMap(kakaoMapRef.current?.getCenter()));
       resizeObserver.observe(mapRef.current);
 
-      [0, 80, 250, 700, 1300].forEach((delay) => {
-        window.setTimeout(() => relayoutMap(center), delay);
+      [0, 80, 250, 700, 1300, 2200].forEach((delay) => {
+        window.setTimeout(() => {
+          relayoutMap(kakaoMapRef.current?.getCenter() ?? center);
+          refreshRoadmapTiles();
+        }, delay);
       });
 
       if (start) {
@@ -219,7 +250,7 @@ export default function Home() {
       cancelled = true;
       resizeObserver?.disconnect();
     };
-  }, [isMapReady, relayoutMap]);
+  }, [isMapReady, refreshRoadmapTiles, relayoutMap]);
 
   useEffect(() => {
     if (!isMapReady || !kakaoMapRef.current || !window.kakao) return;
