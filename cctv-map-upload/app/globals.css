@@ -37,6 +37,7 @@ input {
   height: 100dvh;
   min-height: 100dvh;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .sidebar {
@@ -206,10 +207,13 @@ h1 {
 
 .list {
   display: grid;
+  flex: 1 1 auto;
   gap: 10px;
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   padding-right: 4px;
+  scrollbar-gutter: stable;
 }
 
 .listItem {
@@ -355,13 +359,16 @@ h1 {
 }
 
 .mapArea {
+  height: 100dvh;
   min-height: 100vh;
+  overflow: hidden;
   position: relative;
 }
 
 .mapCanvas {
   height: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
   width: 100%;
 }
 
@@ -805,7 +812,9 @@ dd {
 @media (max-width: 860px) {
   .page {
     display: block;
+    height: 100dvh;
     min-height: 100dvh;
+    overflow: hidden;
   }
 
   .sidebar {
@@ -1001,3 +1010,6 @@ dd {
     padding: 14px;
   }
 }
+    display: flex;
+    flex-direction: column;
+    height: auto;

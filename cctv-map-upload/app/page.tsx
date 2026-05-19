@@ -17,6 +17,7 @@ declare global {
 
 const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 const purposes = ["전체", "방범", "교통", "어린이보호", "시설안전", "기타"] as const;
+const ENABLE_TRAFFIC_CCTV = process.env.NEXT_PUBLIC_ENABLE_TRAFFIC_CCTV === "true";
 
 function getMapStartFromUrl() {
   if (typeof window === "undefined") return null;
@@ -128,7 +129,7 @@ export default function Home() {
     const center = new window.kakao.maps.LatLng(start?.lat ?? SEOUL_CITY_HALL.lat, start?.lng ?? SEOUL_CITY_HALL.lng);
     kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
       center,
-      level: start ? 4 : 5
+      level: 4
     });
 
     if (start) {
@@ -178,9 +179,10 @@ export default function Home() {
             neLat: String(ne.getLat()),
             neLng: String(ne.getLng())
           });
+          const shouldLoadTraffic = ENABLE_TRAFFIC_CCTV && (purpose === "전체" || purpose === "교통");
           const [publicResponse, trafficResponse] = await Promise.all([
             fetch(`/api/cctv?${params.toString()}`, { signal: controller.signal }),
-            purpose === "전체" || purpose === "교통"
+            shouldLoadTraffic
               ? fetch(`/api/traffic-cctv?${params.toString()}`, { signal: controller.signal })
               : Promise.resolve(null)
           ]);
@@ -207,10 +209,8 @@ export default function Home() {
           infoWindowRef.current?.close();
           setDataMessage(
             items.length >= data.maxResults
-              ? "현재 지도 기준 CCTV를 최대 500개까지 표시합니다."
-              : trafficData?.configured === false && (purpose === "전체" || purpose === "교통")
-                ? `현재 지도 기준 CCTV ${items.length.toLocaleString()}개를 표시합니다. ITS 키를 넣으면 교통 CCTV URL도 함께 표시됩니다.`
-                : `현재 지도 기준 CCTV ${items.length.toLocaleString()}개를 표시합니다.`
+              ? `현재 지도 기준 CCTV를 최대 ${data.maxResults.toLocaleString()}개까지 표시합니다.`
+              : `현재 지도 기준 CCTV ${items.length.toLocaleString()}개를 표시합니다.`
           );
         } catch (error) {
           if (controller?.signal.aborted) return;
@@ -276,7 +276,7 @@ export default function Home() {
         setLoadMode("nearby");
         setLocationLabel("서울시청 주변");
         if (kakaoMapRef.current && window.kakao) {
-          kakaoMapRef.current.setLevel(5);
+          kakaoMapRef.current.setLevel(4);
           kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng));
         }
       },
@@ -284,18 +284,18 @@ export default function Home() {
     );
   };
 
-  useEffect(() => {
-    if (!isMapReady || !kakaoMapRef.current) return;
-    if (getMapStartFromUrl()) return;
-    moveToCurrentLocation(false);
-  }, [isMapReady]);
-
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const query = keywordInput.trim();
 
     if (!query) {
-      moveToCurrentLocation();
+      setLoadMode("nearby");
+      setLocationLabel("서울시청 주변");
+      setKeywordInput("");
+      if (kakaoMapRef.current && window.kakao) {
+        kakaoMapRef.current.setLevel(4);
+        kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng));
+      }
       return;
     }
 
