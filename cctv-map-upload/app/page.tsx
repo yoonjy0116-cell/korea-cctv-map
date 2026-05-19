@@ -41,7 +41,7 @@ function getMapStartFromUrl() {
   return {
     lat,
     lng,
-    place: place || "선택한 CCTV 주변",
+    place: place || "선택 위치 주변",
     fromUrl: true
   };
 }
