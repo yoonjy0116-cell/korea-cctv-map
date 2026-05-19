@@ -87,31 +87,35 @@ export default function Home() {
     });
   }, []);
 
-  const refreshRoadmapTiles = useCallback(() => {
+  const kickMapTiles = useCallback((center?: any, level?: number) => {
     if (!kakaoMapRef.current || !mapRef.current || !window.kakao) return;
 
     const map = kakaoMapRef.current;
-    const center = map.getCenter();
-    const level = map.getLevel();
-    const tileImages = Array.from(mapRef.current.querySelectorAll("img"));
-    const onlyWhiteTiles =
-      tileImages.length > 0 &&
-      tileImages
-        .filter((image) => image.width >= 128 || image.height >= 128)
-        .every((image) => image.src.includes("/white.png"));
+    const nextCenter = center ?? map.getCenter();
+    const nextLevel = level ?? map.getLevel();
 
     map.setMapTypeId(window.kakao.maps.MapTypeId.ROADMAP);
     map.relayout();
-    map.setCenter(center);
+    map.setCenter(nextCenter);
 
-    if (onlyWhiteTiles) {
-      map.setLevel(Math.min(level + 1, 14), { animate: false });
-      window.setTimeout(() => {
-        if (!kakaoMapRef.current) return;
-        kakaoMapRef.current.setLevel(level, { animate: false });
-        kakaoMapRef.current.setCenter(center);
-      }, 80);
-    }
+    window.setTimeout(() => {
+      if (!kakaoMapRef.current) return;
+      kakaoMapRef.current.setLevel(Math.min(nextLevel + 1, 14), { animate: false });
+      kakaoMapRef.current.setCenter(nextCenter);
+    }, 80);
+
+    window.setTimeout(() => {
+      if (!kakaoMapRef.current) return;
+      kakaoMapRef.current.setLevel(nextLevel, { animate: false });
+      kakaoMapRef.current.setCenter(nextCenter);
+      kakaoMapRef.current.relayout();
+    }, 180);
+
+    window.setTimeout(() => {
+      if (!kakaoMapRef.current) return;
+      kakaoMapRef.current.panBy(1, 0);
+      kakaoMapRef.current.panBy(-1, 0);
+    }, 320);
   }, []);
 
   const closeMapInfo = () => {
@@ -232,7 +236,7 @@ export default function Home() {
       [0, 80, 250, 700, 1300, 2200].forEach((delay) => {
         window.setTimeout(() => {
           relayoutMap(kakaoMapRef.current?.getCenter() ?? center);
-          refreshRoadmapTiles();
+          kickMapTiles(kakaoMapRef.current?.getCenter() ?? center, kakaoMapRef.current?.getLevel() ?? 4);
         }, delay);
       });
 
@@ -250,7 +254,7 @@ export default function Home() {
       cancelled = true;
       resizeObserver?.disconnect();
     };
-  }, [isMapReady, refreshRoadmapTiles, relayoutMap]);
+  }, [isMapReady, kickMapTiles, relayoutMap]);
 
   useEffect(() => {
     if (!isMapReady || !kakaoMapRef.current || !window.kakao) return;
@@ -370,6 +374,7 @@ export default function Home() {
         const center = new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng);
         kakaoMapRef.current.setCenter(center);
         relayoutMap(center);
+        kickMapTiles(center, 4);
       }
       return;
     }
@@ -390,6 +395,7 @@ export default function Home() {
           kakaoMapRef.current.setLevel(5);
           kakaoMapRef.current.setCenter(center);
           relayoutMap(center);
+          kickMapTiles(center, 5);
         }
 
       },
@@ -401,6 +407,7 @@ export default function Home() {
           kakaoMapRef.current.setLevel(4);
           kakaoMapRef.current.setCenter(center);
           relayoutMap(center);
+          kickMapTiles(center, 4);
         }
       },
       { enableHighAccuracy: false, maximumAge: 1000 * 60 * 10, timeout: 4500 }
@@ -421,6 +428,7 @@ export default function Home() {
         kakaoMapRef.current.setLevel(4);
         kakaoMapRef.current.setCenter(center);
         relayoutMap(center);
+        kickMapTiles(center, 4);
       }
       return;
     }
@@ -443,6 +451,7 @@ export default function Home() {
       kakaoMapRef.current.setLevel(level);
       kakaoMapRef.current.setCenter(center);
       relayoutMap(center);
+      kickMapTiles(center, level);
     };
 
     const searchByKeyword = () => {
