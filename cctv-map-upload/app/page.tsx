@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, FormEvent, TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Cctv, Filter, Loader2, LocateFixed, MapPin, Search } from "lucide-react";
 import { cctvLocations, type CctvLocation } from "../data/cctvLocations";
+import AdsenseAd from "./components/AdsenseAd";
 
 type KakaoMap = any;
 type LoadMode = "nearby" | "search" | "viewport";
@@ -413,9 +414,7 @@ export default function Home() {
           </div>
         </form>
 
-        <aside className="adSlot adSlotSidebar" aria-label="광고 영역">
-          광고 영역
-        </aside>
+        <AdsenseAd className="adSlotSidebar" label="검색 패널 광고 영역" />
 
         <div className="resultHeader">
           <strong>{loadMode === "search" ? "검색 지도 기준" : "현재 지도 기준"} {filteredLocations.length.toLocaleString()}개</strong>
@@ -428,26 +427,30 @@ export default function Home() {
           {filteredLocations.length === 0 && !isDataLoading && (
             <div className="emptyState">현재 지도 화면 안에 표시할 CCTV가 없습니다. 지도를 조금 움직이거나 확대해 보세요.</div>
           )}
-          {filteredLocations.map((item) => (
-            <button
-              className={`listItem ${selected?.id === item.id ? "selected" : ""}`}
-              key={item.id}
-              onClick={() => handleSelect(item)}
-              type="button"
-            >
-              <span className="itemTop">
-                <strong>{item.name}</strong>
-                <em>{item.purpose}</em>
-              </span>
-              <small>{item.direction || "촬영방면정보 없음"}</small>
-              {item.source && <small>출처: {item.source}</small>}
-              {typeof item.distance === "number" && <small>지도 중심에서 약 {(item.distance / 1000).toFixed(1)}km</small>}
-              {item.externalUrl && (
-                <a className="inlineExternalLink" href={item.externalUrl} onClick={(event) => event.stopPropagation()} target="_blank" rel="noreferrer">
-                  실시간 확인 URL
-                </a>
+          {filteredLocations.map((item, index) => (
+            <Fragment key={item.id}>
+              {index === 4 && (
+                <AdsenseAd className="adSlotList" label="검색결과 광고 영역" />
               )}
-            </button>
+              <button
+                className={`listItem ${selected?.id === item.id ? "selected" : ""}`}
+                onClick={() => handleSelect(item)}
+                type="button"
+              >
+                <span className="itemTop">
+                  <strong>{item.name}</strong>
+                  <em>{item.purpose}</em>
+                </span>
+                <small>{item.direction || "촬영방면정보 없음"}</small>
+                {item.source && <small>출처: {item.source}</small>}
+                {typeof item.distance === "number" && <small>지도 중심에서 약 {(item.distance / 1000).toFixed(1)}km</small>}
+                {item.externalUrl && (
+                  <a className="inlineExternalLink" href={item.externalUrl} onClick={(event) => event.stopPropagation()} target="_blank" rel="noreferrer">
+                    실시간 확인 URL
+                  </a>
+                )}
+              </button>
+            </Fragment>
           ))}
         </div>
       </section>
