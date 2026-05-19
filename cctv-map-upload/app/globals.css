@@ -435,7 +435,7 @@ dd {
   margin-bottom: 0;
 }
 
-.detailGrid,
+.detailGridBlock,
 .rawBlock {
   background: #fff;
   border: 1px solid var(--line);
@@ -465,6 +465,56 @@ dd {
 
 .seoTextBlock p:last-child {
   margin-bottom: 0;
+}
+
+.detailActions {
+  display: flex;
+  margin-top: 18px;
+}
+
+.detailActionPrimary {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 8px;
+  color: #fff;
+  display: inline-flex;
+  font-weight: 700;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
+.sourceBlock {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 20px;
+}
+
+.sourceBlock h2 {
+  font-size: 20px;
+  margin: 0 0 10px;
+}
+
+.sourceBlock p,
+.sourceBlock li {
+  color: #36464f;
+  line-height: 1.65;
+}
+
+.sourceBlock ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.sourceBlock a {
+  align-items: center;
+  color: var(--accent);
+  display: inline-flex;
+  font-weight: 700;
+  gap: 4px;
 }
 
 .detailGrid,
