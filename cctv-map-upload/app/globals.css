@@ -365,14 +365,26 @@ h1 {
   border: 1px dashed #b9ccec;
   border-radius: 8px;
   color: #7184a4;
+  contain: layout paint;
   display: flex;
   font-size: 12px;
   justify-content: center;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .adSlot .adsbygoogle {
   min-height: inherit;
+  max-width: 100%;
   width: 100%;
+}
+
+.adSlot iframe {
+  max-width: 100% !important;
+}
+
+.adsbygoogle-noablate {
+  display: none !important;
 }
 
 .adSlotSidebar {

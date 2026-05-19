@@ -73,6 +73,7 @@ export default function Home() {
   const [mapError, setMapError] = useState("");
   const [locationLabel, setLocationLabel] = useState("서울시청 주변");
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+  const [mapVersion, setMapVersion] = useState(0);
   const searchPlaceholder = "강남구, 해운대구";
 
   const filteredLocations = useMemo(() => locations, [locations]);
@@ -85,37 +86,6 @@ export default function Home() {
       kakaoMapRef.current.relayout();
       if (center) kakaoMapRef.current.setCenter(center);
     });
-  }, []);
-
-  const kickMapTiles = useCallback((center?: any, level?: number) => {
-    if (!kakaoMapRef.current || !mapRef.current || !window.kakao) return;
-
-    const map = kakaoMapRef.current;
-    const nextCenter = center ?? map.getCenter();
-    const nextLevel = level ?? map.getLevel();
-
-    map.setMapTypeId(window.kakao.maps.MapTypeId.ROADMAP);
-    map.relayout();
-    map.setCenter(nextCenter);
-
-    window.setTimeout(() => {
-      if (!kakaoMapRef.current) return;
-      kakaoMapRef.current.setLevel(Math.min(nextLevel + 1, 14), { animate: false });
-      kakaoMapRef.current.setCenter(nextCenter);
-    }, 80);
-
-    window.setTimeout(() => {
-      if (!kakaoMapRef.current) return;
-      kakaoMapRef.current.setLevel(nextLevel, { animate: false });
-      kakaoMapRef.current.setCenter(nextCenter);
-      kakaoMapRef.current.relayout();
-    }, 180);
-
-    window.setTimeout(() => {
-      if (!kakaoMapRef.current) return;
-      kakaoMapRef.current.panBy(1, 0);
-      kakaoMapRef.current.panBy(-1, 0);
-    }, 320);
   }, []);
 
   const closeMapInfo = () => {
@@ -214,6 +184,46 @@ export default function Home() {
     const center = new window.kakao.maps.LatLng(start?.lat ?? SEOUL_CITY_HALL.lat, start?.lng ?? SEOUL_CITY_HALL.lng);
     let resizeObserver: ResizeObserver | null = null;
     let cancelled = false;
+    let retryCount = 0;
+
+    const hasVisibleRoadmapTiles = () => {
+      if (!mapRef.current) return false;
+
+      return Array.from(mapRef.current.querySelectorAll("img")).some((image) => {
+        const rect = image.getBoundingClientRect();
+        const src = image.getAttribute("src") ?? "";
+
+        return rect.width > 32 && rect.height > 32 && !src.includes("/white.png");
+      });
+    };
+
+    const rebuildMap = (nextCenter = center, nextLevel = 4) => {
+      if (!mapRef.current || !window.kakao) return;
+
+      markersRef.current.forEach((marker) => marker.setMap(null));
+      markersRef.current = [];
+      infoWindowRef.current?.close();
+      mapRef.current.replaceChildren();
+
+      kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
+        center: nextCenter,
+        level: nextLevel,
+        mapTypeId: window.kakao.maps.MapTypeId.ROADMAP
+      });
+
+      window.kakao.maps.event.addListener(kakaoMapRef.current, "click", closeMapInfo);
+      setMapVersion((value) => value + 1);
+
+      [0, 80, 250, 700].forEach((delay) => {
+        window.setTimeout(() => relayoutMap(kakaoMapRef.current?.getCenter() ?? nextCenter), delay);
+      });
+
+      window.setTimeout(() => {
+        if (cancelled || !kakaoMapRef.current || hasVisibleRoadmapTiles() || retryCount >= 2) return;
+        retryCount += 1;
+        rebuildMap(kakaoMapRef.current.getCenter(), kakaoMapRef.current.getLevel());
+      }, 1500);
+    };
 
     const createMap = () => {
       if (cancelled || !mapRef.current || !window.kakao || kakaoMapRef.current) return;
@@ -224,28 +234,14 @@ export default function Home() {
         return;
       }
 
-      kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
-        center,
-        level: 4,
-        mapTypeId: window.kakao.maps.MapTypeId.ROADMAP
-      });
-
       resizeObserver = new ResizeObserver(() => relayoutMap(kakaoMapRef.current?.getCenter()));
       resizeObserver.observe(mapRef.current);
-
-      [0, 80, 250, 700, 1300, 2200].forEach((delay) => {
-        window.setTimeout(() => {
-          relayoutMap(kakaoMapRef.current?.getCenter() ?? center);
-          kickMapTiles(kakaoMapRef.current?.getCenter() ?? center, kakaoMapRef.current?.getLevel() ?? 4);
-        }, delay);
-      });
+      rebuildMap(center, 4);
 
       if (start) {
         setLoadMode("search");
         setLocationLabel(start.place);
       }
-
-      window.kakao.maps.event.addListener(kakaoMapRef.current, "click", closeMapInfo);
     };
 
     window.requestAnimationFrame(createMap);
@@ -254,7 +250,7 @@ export default function Home() {
       cancelled = true;
       resizeObserver?.disconnect();
     };
-  }, [isMapReady, kickMapTiles, relayoutMap]);
+  }, [isMapReady, relayoutMap]);
 
   useEffect(() => {
     if (!isMapReady || !kakaoMapRef.current || !window.kakao) return;
@@ -363,7 +359,7 @@ export default function Home() {
         window.kakao.maps.event.removeListener(kakaoMapRef.current, "idle", loadVisibleCctvs);
       }
     };
-  }, [isMapReady, loadMode, locationLabel, purpose]);
+  }, [isMapReady, loadMode, locationLabel, mapVersion, purpose]);
 
   const moveToCurrentLocation = (collapsePanel = true) => {
     if (!navigator.geolocation) {
@@ -374,7 +370,6 @@ export default function Home() {
         const center = new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng);
         kakaoMapRef.current.setCenter(center);
         relayoutMap(center);
-        kickMapTiles(center, 4);
       }
       return;
     }
@@ -395,7 +390,6 @@ export default function Home() {
           kakaoMapRef.current.setLevel(5);
           kakaoMapRef.current.setCenter(center);
           relayoutMap(center);
-          kickMapTiles(center, 5);
         }
 
       },
@@ -407,7 +401,6 @@ export default function Home() {
           kakaoMapRef.current.setLevel(4);
           kakaoMapRef.current.setCenter(center);
           relayoutMap(center);
-          kickMapTiles(center, 4);
         }
       },
       { enableHighAccuracy: false, maximumAge: 1000 * 60 * 10, timeout: 4500 }
@@ -428,7 +421,6 @@ export default function Home() {
         kakaoMapRef.current.setLevel(4);
         kakaoMapRef.current.setCenter(center);
         relayoutMap(center);
-        kickMapTiles(center, 4);
       }
       return;
     }
@@ -451,7 +443,6 @@ export default function Home() {
       kakaoMapRef.current.setLevel(level);
       kakaoMapRef.current.setCenter(center);
       relayoutMap(center);
-      kickMapTiles(center, level);
     };
 
     const searchByKeyword = () => {
@@ -542,7 +533,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [filteredLocations, isMapReady]);
+  }, [filteredLocations, isMapReady, mapVersion]);
 
   const handleSelect = (item: CctvLocation) => {
     setSelected(item);
