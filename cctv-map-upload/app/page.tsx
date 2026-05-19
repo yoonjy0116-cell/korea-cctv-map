@@ -62,6 +62,7 @@ export default function Home() {
         <strong>${escapeHtml(item.name)}</strong>
         <small>${escapeHtml(item.direction || "촬영방면정보 없음")}</small>
         ${item.managementNumber ? `<a href="${detailUrl}">자세히 보기</a>` : ""}
+        ${item.externalUrl ? `<a href="${escapeHtml(item.externalUrl)}" target="_blank" rel="noreferrer">실시간 확인</a>` : ""}
       </div>
     `;
 
@@ -152,23 +153,39 @@ export default function Home() {
             neLat: String(ne.getLat()),
             neLng: String(ne.getLng())
           });
-          const response = await fetch(`/api/cctv?${params.toString()}`, {
-            signal: controller.signal
-          });
+          const [publicResponse, trafficResponse] = await Promise.all([
+            fetch(`/api/cctv?${params.toString()}`, { signal: controller.signal }),
+            purpose === "전체" || purpose === "교통"
+              ? fetch(`/api/traffic-cctv?${params.toString()}`, { signal: controller.signal })
+              : Promise.resolve(null)
+          ]);
 
-          if (!response.ok) throw new Error("공공데이터 응답 오류");
+          if (!publicResponse.ok) throw new Error("공공데이터 응답 오류");
 
-          const data = await response.json();
+          const data = await publicResponse.json();
+          const trafficData = trafficResponse?.ok ? await trafficResponse.json() : null;
           if (requestId !== requestIdRef.current) return;
 
-          const items = data.items as CctvLocation[];
+          const publicItems = data.items as CctvLocation[];
+          const trafficItems = (trafficData?.items ?? []) as CctvLocation[];
+          const seen = new Set<string>();
+          const items = [...publicItems, ...trafficItems]
+            .filter((item) => {
+              const key = `${item.name}-${item.lat.toFixed(5)}-${item.lng.toFixed(5)}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            })
+            .slice(0, data.maxResults);
           setLocations(items);
           setSelected(null);
           infoWindowRef.current?.close();
           setDataMessage(
             items.length >= data.maxResults
               ? "현재 지도 기준 CCTV를 최대 500개까지 표시합니다."
-              : `현재 지도 기준 CCTV ${items.length.toLocaleString()}개를 표시합니다.`
+              : trafficData?.configured === false && (purpose === "전체" || purpose === "교통")
+                ? `현재 지도 기준 CCTV ${items.length.toLocaleString()}개를 표시합니다. ITS 키를 넣으면 교통 CCTV URL도 함께 표시됩니다.`
+                : `현재 지도 기준 CCTV ${items.length.toLocaleString()}개를 표시합니다.`
           );
         } catch (error) {
           if (controller?.signal.aborted) return;
@@ -423,7 +440,13 @@ export default function Home() {
                 <em>{item.purpose}</em>
               </span>
               <small>{item.direction || "촬영방면정보 없음"}</small>
+              {item.source && <small>출처: {item.source}</small>}
               {typeof item.distance === "number" && <small>지도 중심에서 약 {(item.distance / 1000).toFixed(1)}km</small>}
+              {item.externalUrl && (
+                <a className="inlineExternalLink" href={item.externalUrl} onClick={(event) => event.stopPropagation()} target="_blank" rel="noreferrer">
+                  실시간 확인 URL
+                </a>
+              )}
             </button>
           ))}
         </div>
@@ -462,11 +485,22 @@ export default function Home() {
                 <dt>카메라대수</dt>
                 <dd>{selected.cameraCount}대</dd>
               </div>
+              {selected.source && (
+                <div>
+                  <dt>출처</dt>
+                  <dd>{selected.source}</dd>
+                </div>
+              )}
             </dl>
             {selected.managementNumber && (
               <Link className="detailLink" href={`/cctv/${encodeURIComponent(selected.slug ?? selected.managementNumber)}`}>
                 자세히 보기
               </Link>
+            )}
+            {selected.externalUrl && (
+              <a className="detailLink detailExternalLink" href={selected.externalUrl} target="_blank" rel="noreferrer">
+                실시간 확인 URL
+              </a>
             )}
           </aside>
         )}

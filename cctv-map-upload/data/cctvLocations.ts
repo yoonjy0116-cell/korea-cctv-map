@@ -14,6 +14,11 @@ export type CctvLocation = {
   direction?: string;
   slug?: string;
   distance?: number;
+  source?: string;
+  externalUrl?: string;
+  roadType?: string;
+  resolution?: string;
+  liveUpdatedAt?: string;
 };
 
 export const cctvLocations: CctvLocation[] = [

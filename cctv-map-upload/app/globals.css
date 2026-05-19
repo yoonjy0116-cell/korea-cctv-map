@@ -223,6 +223,14 @@ h1 {
   text-align: left;
 }
 
+.inlineExternalLink {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  width: max-content;
+}
+
 .listItem.selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.12);
@@ -429,6 +437,12 @@ h1 {
   margin-top: 16px;
   min-height: 42px;
   text-decoration: none;
+}
+
+.detailExternalLink {
+  background: #fff;
+  border: 1px solid var(--accent);
+  color: var(--accent);
 }
 
 dl {
