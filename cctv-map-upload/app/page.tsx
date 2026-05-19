@@ -16,7 +16,24 @@ declare global {
 }
 
 const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
-const purposes = ["전체", "방범", "어린이보호", "교통", "시설안전"] as const;
+const purposes = ["전체", "방범", "교통", "어린이보호", "시설안전", "기타"] as const;
+
+function getMapStartFromUrl() {
+  if (typeof window === "undefined") return null;
+
+  const params = new URLSearchParams(window.location.search);
+  const lat = Number(params.get("lat"));
+  const lng = Number(params.get("lng"));
+  const place = params.get("place")?.trim();
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  return {
+    lat,
+    lng,
+    place: place || "선택한 CCTV 주변"
+  };
+}
 
 function escapeHtml(value = "") {
   return value
@@ -107,11 +124,18 @@ export default function Home() {
   useEffect(() => {
     if (!isMapReady || !mapRef.current || !window.kakao || kakaoMapRef.current) return;
 
-    const center = new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng);
+    const start = getMapStartFromUrl();
+    const center = new window.kakao.maps.LatLng(start?.lat ?? SEOUL_CITY_HALL.lat, start?.lng ?? SEOUL_CITY_HALL.lng);
     kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
       center,
-      level: 5
+      level: start ? 4 : 5
     });
+
+    if (start) {
+      setLoadMode("search");
+      setLocationLabel(start.place);
+      setKeywordInput(start.place);
+    }
 
     window.kakao.maps.event.addListener(kakaoMapRef.current, "click", closeMapInfo);
   }, [isMapReady]);
@@ -262,6 +286,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!isMapReady || !kakaoMapRef.current) return;
+    if (getMapStartFromUrl()) return;
     moveToCurrentLocation(false);
   }, [isMapReady]);
 

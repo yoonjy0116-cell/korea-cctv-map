@@ -1,4 +1,4 @@
-export type CctvPurpose = "방범" | "어린이보호" | "교통" | "시설안전";
+export type CctvPurpose = "방범" | "어린이보호" | "교통" | "시설안전" | "기타";
 
 export type CctvLocation = {
   id: string | number;
@@ -6,6 +6,7 @@ export type CctvLocation = {
   region: string;
   address: string;
   purpose: CctvPurpose;
+  rawPurpose?: string;
   cameraCount: number;
   manager: string;
   lat: number;

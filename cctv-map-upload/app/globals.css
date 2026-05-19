@@ -1,12 +1,13 @@
 :root {
-  --ink: #172026;
-  --muted: #63717b;
-  --line: #d9e1e7;
+  --ink: #162033;
+  --muted: #60718a;
+  --line: #d7e2f0;
   --panel: #ffffff;
-  --soft: #f4f7f9;
-  --accent: #156f78;
-  --accent-strong: #0f5860;
-  --warn: #9a5b12;
+  --soft: #f4f8fd;
+  --accent: #1a56db;
+  --accent-strong: #1647b8;
+  --accent-soft: #e8f1ff;
+  --warn: #b56218;
 }
 
 * {
@@ -62,7 +63,7 @@ input {
 
 .brandIcon {
   align-items: center;
-  background: #dff0ed;
+  background: var(--accent-soft);
   border-radius: 8px;
   color: var(--accent);
   display: flex;
@@ -107,7 +108,7 @@ h1 {
 
 .searchBox:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.14);
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.14);
 }
 
 .searchBox input {
@@ -233,7 +234,7 @@ h1 {
 
 .listItem.selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.12);
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
 }
 
 .itemTop {
@@ -244,7 +245,7 @@ h1 {
 }
 
 .itemTop em {
-  background: #eaf4f2;
+  background: var(--accent-soft);
   border-radius: 999px;
   color: var(--accent-strong);
   flex: 0 0 auto;
@@ -320,10 +321,10 @@ h1 {
 
 .adSlot {
   align-items: center;
-  background: #f7fafb;
-  border: 1px dashed #b9c8d1;
+  background: #f7faff;
+  border: 1px dashed #b9ccec;
   border-radius: 8px;
-  color: #7b8992;
+  color: #7184a4;
   display: flex;
   font-size: 12px;
   justify-content: center;
@@ -676,7 +677,7 @@ dd {
 
 .nearbyItem:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.1);
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
 }
 
 .nearbyItem strong {
@@ -739,6 +740,68 @@ dd {
   margin: 0;
 }
 
+.regionStats {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.regionStatCard {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+}
+
+.regionStatCard strong {
+  color: var(--accent);
+  font-size: 22px;
+}
+
+.regionStatCard span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.regionLinkGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.regionLink,
+.regionCctvItem {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: inherit;
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+  text-decoration: none;
+}
+
+.regionLink:hover,
+.regionCctvItem:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+}
+
+.regionLink span,
+.regionCctvItem span,
+.regionCctvItem small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.regionCctvList {
+  display: grid;
+  gap: 10px;
+}
+
 @media (max-width: 860px) {
   .page {
     display: block;
@@ -782,7 +845,7 @@ dd {
   }
 
   .mobilePanelHandle span {
-    background: #c5d0d7;
+    background: #bed0eb;
     border-radius: 999px;
     height: 4px;
     left: 50%;
@@ -912,7 +975,9 @@ dd {
 
   .detailGrid,
   .rawGrid,
-  .nearbyList {
+  .nearbyList,
+  .regionStats,
+  .regionLinkGrid {
     grid-template-columns: 1fr;
   }
 
