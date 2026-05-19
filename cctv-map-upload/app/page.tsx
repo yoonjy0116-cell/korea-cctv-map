@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Cctv, Filter, Loader2, LocateFixed, MapPin, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, Cctv, Filter, Loader2, LocateFixed, MapPin, Search } from "lucide-react";
 import { cctvLocations, type CctvLocation } from "../data/cctvLocations";
 
 type KakaoMap = any;
@@ -31,11 +31,12 @@ export default function Home() {
   const kakaoMapRef = useRef<KakaoMap | null>(null);
   const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any | null>(null);
+  const panelTouchStartY = useRef<number | null>(null);
   const [locations, setLocations] = useState<CctvLocation[]>(cctvLocations);
   const [keywordInput, setKeywordInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const [purpose, setPurpose] = useState<(typeof purposes)[number]>("전체");
-  const [selected, setSelected] = useState<CctvLocation | null>(cctvLocations[0]);
+  const [selected, setSelected] = useState<CctvLocation | null>(null);
   const [searchCenter, setSearchCenter] = useState(SEOUL_CITY_HALL);
   const [loadMode, setLoadMode] = useState<LoadMode>("nearby");
   const [isMapReady, setIsMapReady] = useState(false);
@@ -43,8 +44,15 @@ export default function Home() {
   const [dataMessage, setDataMessage] = useState("내 위치 주변 CCTV를 확인하는 중입니다.");
   const [mapError, setMapError] = useState("");
   const [locationLabel, setLocationLabel] = useState("서울시청 주변");
+  const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+  const [searchPlaceholder, setSearchPlaceholder] = useState("서울시청, 해운대구");
 
   const filteredLocations = useMemo(() => locations, [locations]);
+
+  const closeMapInfo = () => {
+    infoWindowRef.current?.close();
+    setSelected(null);
+  };
 
   const openInfoWindow = (item: CctvLocation, position: any) => {
     if (!kakaoMapRef.current || !window.kakao) return;
@@ -53,7 +61,6 @@ export default function Home() {
     const content = `
       <div class="markerInfo">
         <strong>${escapeHtml(item.name)}</strong>
-        <span>${escapeHtml(item.address)}</span>
         <small>${escapeHtml(item.direction || "촬영방면정보 없음")}</small>
         ${item.managementNumber ? `<a href="${detailUrl}">자세히 보기</a>` : ""}
       </div>
@@ -85,7 +92,7 @@ export default function Home() {
     }
 
     const script = document.createElement("script");
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`;
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false&libraries=services`;
     script.async = true;
     script.onload = () => {
       window.kakao.maps.load(() => setIsMapReady(true));
@@ -104,6 +111,8 @@ export default function Home() {
       center,
       level: 5
     });
+
+    window.kakao.maps.event.addListener(kakaoMapRef.current, "click", closeMapInfo);
   }, [isMapReady]);
 
   useEffect(() => {
@@ -126,6 +135,18 @@ export default function Home() {
           kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(nextCenter.lat, nextCenter.lng));
           kakaoMapRef.current.setLevel(5);
         }
+
+        const geocoder = window.kakao?.maps?.services
+          ? new window.kakao.maps.services.Geocoder()
+          : null;
+
+        geocoder?.coord2RegionCode(nextCenter.lng, nextCenter.lat, (result: any[], status: string) => {
+          if (status !== window.kakao.maps.services.Status.OK) return;
+          const town = result.find((item) => item.region_type === "H")?.region_3depth_name;
+          if (town) {
+            setSearchPlaceholder(`${town}, 서울시청, 해운대구`);
+          }
+        });
       },
       () => {
         setSearchCenter(SEOUL_CITY_HALL);
@@ -164,8 +185,9 @@ export default function Home() {
         const nextMode = (data.mode ?? "default") as LoadMode;
 
         setLocations(items);
-        setSelected(items[0] ?? null);
+        setSelected(null);
         setLoadMode(nextMode);
+        infoWindowRef.current?.close();
         setDataMessage(
           nextMode === "nearby"
             ? `${locationLabel}에서 가까운 CCTV ${items.length.toLocaleString()}개를 표시합니다.`
@@ -176,7 +198,7 @@ export default function Home() {
       } catch (error) {
         if (controller.signal.aborted) return;
         setLocations(cctvLocations);
-        setSelected(cctvLocations[0]);
+        setSelected(null);
         setDataMessage("공공데이터를 불러오지 못해 예시 데이터를 표시합니다.");
       } finally {
         if (!controller.signal.aborted) {
@@ -194,12 +216,14 @@ export default function Home() {
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setKeyword(keywordInput.trim());
+    setIsPanelExpanded(false);
   };
 
   const handleNearby = () => {
     setKeyword("");
     setKeywordInput("");
     setLoadMode("nearby");
+    setIsPanelExpanded(false);
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -218,6 +242,20 @@ export default function Home() {
         { enableHighAccuracy: false, maximumAge: 1000 * 60 * 10, timeout: 4500 }
       );
     }
+  };
+
+  const handlePanelTouchStart = (event: TouchEvent<HTMLButtonElement>) => {
+    panelTouchStartY.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handlePanelTouchEnd = (event: TouchEvent<HTMLButtonElement>) => {
+    const startY = panelTouchStartY.current;
+    const endY = event.changedTouches[0]?.clientY ?? null;
+    panelTouchStartY.current = null;
+
+    if (startY === null || endY === null) return;
+    if (startY - endY > 24) setIsPanelExpanded(true);
+    if (endY - startY > 24) setIsPanelExpanded(false);
   };
 
   useEffect(() => {
@@ -269,14 +307,26 @@ export default function Home() {
     if (!kakaoMapRef.current || !window.kakao) return;
 
     const position = new window.kakao.maps.LatLng(item.lat, item.lng);
-    kakaoMapRef.current.panTo(position);
     kakaoMapRef.current.setLevel(4);
+    kakaoMapRef.current.setCenter(position);
     openInfoWindow(item, position);
   };
 
   return (
     <main className="page">
-      <section className="sidebar" aria-label="CCTV 검색 패널">
+      <section className={`sidebar ${isPanelExpanded ? "expanded" : "collapsed"}`} aria-label="CCTV 검색 패널">
+        <button
+          className="mobilePanelHandle"
+          onClick={() => setIsPanelExpanded((value) => !value)}
+          onTouchEnd={handlePanelTouchEnd}
+          onTouchStart={handlePanelTouchStart}
+          type="button"
+        >
+          <span />
+          {isPanelExpanded ? <ChevronDown size={18} aria-hidden="true" /> : <ChevronUp size={18} aria-hidden="true" />}
+          <strong>{isPanelExpanded ? "검색창 내리기" : "검색창 올리기"}</strong>
+        </button>
+
         <div className="brand">
           <div className="brandIcon">
             <Cctv size={24} aria-hidden="true" />
@@ -291,16 +341,17 @@ export default function Home() {
           <label className="searchBox">
             <Search size={18} aria-hidden="true" />
             <input
+              onFocus={() => setIsPanelExpanded(true)}
               value={keywordInput}
               onChange={(event) => setKeywordInput(event.target.value)}
-              placeholder="예: 소담동, 서울시청, 해운대구"
+              placeholder={`예: ${searchPlaceholder}`}
             />
             <button className="searchButton" disabled={isDataLoading} type="submit">
               {isDataLoading ? <Loader2 size={17} aria-hidden="true" /> : "검색"}
             </button>
           </label>
 
-          <button className="searchButton" onClick={handleNearby} type="button">
+          <button className="searchButton nearbyButton" onClick={handleNearby} type="button">
             <LocateFixed size={16} aria-hidden="true" /> 주변 CCTV
           </button>
 
@@ -374,10 +425,6 @@ export default function Home() {
               <h2>{selected.name}</h2>
             </div>
             <dl>
-              <div>
-                <dt>주소</dt>
-                <dd>{selected.address}</dd>
-              </div>
               <div>
                 <dt>설치목적</dt>
                 <dd>{selected.purpose}</dd>

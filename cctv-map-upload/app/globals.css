@@ -49,6 +49,10 @@ input {
   padding: 24px;
 }
 
+.mobilePanelHandle {
+  display: none;
+}
+
 .brand {
   align-items: center;
   display: flex;
@@ -114,14 +118,18 @@ h1 {
 }
 
 .searchButton {
+  align-items: center;
   background: var(--accent);
   border: 0;
   border-radius: 7px;
   color: #fff;
   cursor: pointer;
+  display: inline-flex;
   flex: 0 0 auto;
   font-weight: 700;
+  gap: 5px;
   height: 34px;
+  justify-content: center;
   min-width: 58px;
 }
 
@@ -256,8 +264,8 @@ h1 {
 .markerInfo {
   display: grid;
   gap: 5px;
-  max-width: 216px;
-  min-width: 176px;
+  max-width: 220px;
+  min-width: 170px;
   padding: 10px 11px 11px;
   position: relative;
 }
@@ -268,7 +276,6 @@ h1 {
   line-height: 1.35;
 }
 
-.markerInfo span,
 .markerInfo small {
   color: var(--muted);
   font-size: 12px;
@@ -699,17 +706,53 @@ dd {
     bottom: 0;
     box-shadow: 0 -18px 35px rgba(23, 32, 38, 0.16);
     left: 0;
-    max-height: 48dvh;
+    max-height: 36dvh;
     min-height: 0;
-    padding: 14px;
+    padding: 8px 14px 14px;
     position: fixed;
     right: 0;
+    transition: max-height 0.2s ease;
     z-index: 20;
+  }
+
+  .sidebar.expanded {
+    max-height: 78dvh;
+  }
+
+  .mobilePanelHandle {
+    align-items: center;
+    background: #fff;
+    border: 0;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    min-height: 32px;
+    padding: 0;
+    position: relative;
+    width: 100%;
+  }
+
+  .mobilePanelHandle span {
+    background: #c5d0d7;
+    border-radius: 999px;
+    height: 4px;
+    left: 50%;
+    position: absolute;
+    top: 2px;
+    transform: translateX(-50%);
+    width: 44px;
+  }
+
+  .mobilePanelHandle strong {
+    font-size: 12px;
+    font-weight: 700;
   }
 
   .brand {
     gap: 10px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   .brandIcon {
@@ -727,6 +770,11 @@ dd {
 
   .controls {
     gap: 10px;
+  }
+
+  .nearbyButton {
+    min-height: 36px;
+    width: 100%;
   }
 
   .searchBox input {
@@ -756,8 +804,7 @@ dd {
   }
 
   .adSlotSidebar {
-    min-height: 50px;
-    margin-top: 10px;
+    display: none;
   }
 
   .dataMessage {
@@ -790,14 +837,7 @@ dd {
   }
 
   .detailPanel {
-    bottom: calc(48dvh + 12px);
-    left: 12px;
-    max-height: 30dvh;
-    overflow: auto;
-    padding: 14px;
-    right: 12px;
-    width: auto;
-    z-index: 15;
+    display: none;
   }
 
   .detailPanel h2 {
