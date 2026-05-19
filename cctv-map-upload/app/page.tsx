@@ -152,7 +152,6 @@ export default function Home() {
     if (start) {
       setLoadMode("search");
       setLocationLabel(start.place);
-      setKeywordInput(start.place);
     }
 
     window.kakao.maps.event.addListener(kakaoMapRef.current, "click", closeMapInfo);
