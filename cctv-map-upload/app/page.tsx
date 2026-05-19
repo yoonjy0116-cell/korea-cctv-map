@@ -63,7 +63,7 @@ export default function Home() {
   const [mapError, setMapError] = useState("");
   const [locationLabel, setLocationLabel] = useState("서울시청 주변");
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
-  const [searchPlaceholder, setSearchPlaceholder] = useState("서울시청, 해운대구");
+  const [searchPlaceholder, setSearchPlaceholder] = useState("강남구, 해운대구");
 
   const filteredLocations = useMemo(() => locations, [locations]);
 
@@ -131,6 +131,12 @@ export default function Home() {
       center,
       level: 4
     });
+
+    window.setTimeout(() => {
+      if (!kakaoMapRef.current || !window.kakao) return;
+      kakaoMapRef.current.relayout();
+      kakaoMapRef.current.setCenter(center);
+    }, 60);
 
     if (start) {
       setLoadMode("search");
@@ -241,6 +247,11 @@ export default function Home() {
     if (!navigator.geolocation) {
       setLocationLabel("서울시청 주변");
       setLoadMode("nearby");
+      if (kakaoMapRef.current && window.kakao) {
+        kakaoMapRef.current.relayout();
+        kakaoMapRef.current.setLevel(4);
+        kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng));
+      }
       return;
     }
 
@@ -268,7 +279,7 @@ export default function Home() {
           if (status !== window.kakao.maps.services.Status.OK) return;
           const town = result.find((item) => item.region_type === "H")?.region_3depth_name;
           if (town) {
-            setSearchPlaceholder(`${town}, 서울시청, 해운대구`);
+            setSearchPlaceholder(`${town}, 강남구, 해운대구`);
           }
         });
       },
@@ -315,14 +326,35 @@ export default function Home() {
         return;
       }
 
-      const first = result[0];
-      const lat = Number(first.y);
-      const lng = Number(first.x);
+      const validResults = result
+        .map((item) => ({
+          lat: Number(item.y),
+          lng: Number(item.x)
+        }))
+        .filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lng))
+        .slice(0, 12);
+
+      if (validResults.length === 0) {
+        setIsDataLoading(false);
+        setDataMessage("검색한 지역의 지도 좌표를 찾지 못했습니다.");
+        return;
+      }
+
       setLoadMode("search");
       setLocationLabel(query);
       setIsPanelExpanded(false);
-      kakaoMapRef.current.setLevel(5);
-      kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(lat, lng));
+      kakaoMapRef.current.relayout();
+
+      if (validResults.length >= 2) {
+        const bounds = new window.kakao.maps.LatLngBounds();
+        validResults.forEach((item) => {
+          bounds.extend(new window.kakao.maps.LatLng(item.lat, item.lng));
+        });
+        kakaoMapRef.current.setBounds(bounds);
+      } else {
+        kakaoMapRef.current.setLevel(4);
+        kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(validResults[0].lat, validResults[0].lng));
+      }
     });
   };
 
