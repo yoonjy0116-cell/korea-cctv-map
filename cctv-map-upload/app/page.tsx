@@ -22,19 +22,27 @@ const MIN_VISIBLE_MAP_LEVEL = 8;
 const KAKAO_MAP_SCRIPT_ID = "kakao-map-sdk";
 
 function getMapStartFromUrl() {
-  if (typeof window === "undefined") return null;
+  const fallback = {
+    lat: SEOUL_CITY_HALL.lat,
+    lng: SEOUL_CITY_HALL.lng,
+    place: "서울시청 주변",
+    fromUrl: false
+  };
+
+  if (typeof window === "undefined") return fallback;
 
   const params = new URLSearchParams(window.location.search);
   const lat = Number(params.get("lat"));
   const lng = Number(params.get("lng"));
   const place = params.get("place")?.trim();
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return fallback;
 
   return {
     lat,
     lng,
-    place: place || "선택한 CCTV 주변"
+    place: place || "선택한 CCTV 주변",
+    fromUrl: true
   };
 }
 
@@ -238,10 +246,10 @@ export default function Home() {
       resizeObserver.observe(mapRef.current);
       rebuildMap(center, 4);
 
-      if (start) {
+      if (start.fromUrl) {
         setLoadMode("search");
-        setLocationLabel(start.place);
       }
+      setLocationLabel(start.place);
     };
 
     window.requestAnimationFrame(createMap);
