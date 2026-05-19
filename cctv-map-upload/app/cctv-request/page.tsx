@@ -7,34 +7,66 @@ const requestFileUrl = "/downloads/personal-video-info-request.hwp";
 export const metadata: Metadata = {
   title: "CCTV 열람 신청 방법",
   description:
-    "정보공개포털 기준 CCTV 개인영상정보 존재확인 및 열람 신청 절차, 신청서 다운로드, 접수 방법을 안내합니다."
+    "정보공개포털에서 CCTV 개인영상정보 존재확인 및 열람을 청구하는 절차와 작성 항목, 신청서 다운로드를 안내합니다."
 };
 
 const steps = [
   {
-    title: "1. 정보공개포털 접속",
-    text: "정보공개포털에 접속한 뒤 청구 또는 신청 메뉴에서 CCTV 영상 열람과 관련된 민원을 준비합니다.",
-    image: "/images/open-portal/open-portal-step-1.webp"
+    title: "1단계: 정보공개청구 메뉴 입장",
+    action: "홈페이지 메인 화면에서 우측 하단의 [정보공개청구] 버튼을 클릭합니다.",
+    image: "/images/cctv-request/cctv-request-step-1.webp"
   },
   {
-    title: "2. 청구 정보 입력",
-    text: "청구인 정보, 연락처, 열람이 필요한 날짜와 시간, 장소를 최대한 구체적으로 입력합니다.",
-    image: "/images/open-portal/open-portal-step-2.webp"
+    title: "2단계: 생활문제 해결정보 선택",
+    action:
+      "청구정보 입력 화면이 나오면, '생활문제 해결정보 선택' 항목 옆에 있는 [생활문제 해결정보] 파란색 버튼을 클릭합니다.",
+    image: "/images/cctv-request/cctv-request-step-5.webp"
   },
   {
-    title: "3. 대상 기관 확인",
-    text: "CCTV 상세페이지에 표시된 관리기관을 기준으로 접수 기관을 확인합니다.",
-    image: "/images/open-portal/open-portal-step-3.webp"
+    title: "3단계: 청구 유형(CCTV) 선택",
+    action:
+      "팝업창이나 화면에 10개의 생활문제 해결정보 유형이 나타나면, 그중 [CCTV] 버튼을 찾아 클릭합니다.",
+    image: "/images/cctv-request/cctv-request-step-2.webp"
   },
   {
-    title: "4. 신청서 첨부",
-    text: "개인영상정보 존재확인 및 열람 청구서를 작성해 첨부합니다. 필요한 경우 신분 확인 자료나 사고 관련 자료가 요구될 수 있습니다.",
-    image: "/images/open-portal/open-portal-step-5.webp"
+    title: "4단계: 사건·사고 발생지역 입력",
+    action:
+      "'사건·사고 발생지역' 항목에서 해당 CCTV가 위치한 [시도] 및 [시군구]를 드롭다운 메뉴에서 선택합니다. 예: 서울특별시 동대문구",
+    image: "/images/cctv-request/cctv-request-step-4.webp"
   },
   {
-    title: "5. 접수 후 기관 안내 확인",
-    text: "기관 검토 후 열람 가능 여부, 방문 필요 여부, 제3자 개인정보 보호를 위한 제한 사항을 안내받습니다.",
-    image: "/images/open-portal/open-portal-step-9.webp"
+    title: "5단계: 청구내용 작성",
+    action:
+      "안내된 'CCTV 작성예시'를 확인한 후, [확인했습니다]에 체크하고 필수 작성 항목을 빠짐없이 작성합니다.",
+    image: "/images/cctv-request/cctv-request-step-3.webp"
+  }
+];
+
+const requiredItems = [
+  "영상 속 인물 인적사항: 성명, 주민번호 앞자리, 성별",
+  "상세 식별정보: 인상착의, 차량번호 등",
+  "사건·사고 정보: 발생 유형, 장소 및 구체적 시간",
+  "CCTV 정보: 관리번호 및 설치장소",
+  "영상 속 인물과의 관계: 본인, 가족, 대리인 등",
+  "청구내용 또는 청구 요청자료",
+  "관계 증명 제출자료: 신분증, 가족관계증명서 등"
+];
+
+const extraImages = [
+  {
+    title: "청구기관 찾기",
+    text: "관리기관이 명확하지 않을 때는 기관찾기 기능으로 관련 기관을 검색합니다.",
+    image: "/images/cctv-request/cctv-request-step-6.webp"
+  },
+  {
+    title: "기관 선택 확인",
+    text: "생활문제 해결정보 기반 추천 기관을 확인하고 필요한 기관을 선택합니다.",
+    image: "/images/cctv-request/cctv-request-step-7.webp"
+  },
+  {
+    title: "청구 완료",
+    text: "청구인 정보와 첨부자료를 확인한 뒤 하단의 청구 버튼으로 접수합니다.",
+    image: "/images/cctv-request/cctv-request-step-8.webp"
   }
 ];
 
@@ -51,9 +83,9 @@ export default function CctvRequestPage() {
           <p className="eyebrow">정보공개포털 기준 안내</p>
           <h1>CCTV 열람 신청 방법</h1>
           <p>
-            CCTV 영상은 개인정보가 포함될 수 있어 누구나 바로 볼 수 없습니다. 사고 확인,
-            분실물 확인, 범죄 피해 확인 등 정당한 사유가 있을 때 관리기관의 절차에 따라
-            존재확인 또는 열람을 신청할 수 있습니다.
+            CCTV 영상은 개인정보가 포함될 수 있어 바로 열람할 수 없습니다. 사고 확인,
+            분실물 확인, 범죄 피해 확인 등 정당한 사유가 있을 때 정보공개포털 또는 관리기관을
+            통해 개인영상정보 존재확인 및 열람을 청구할 수 있습니다.
           </p>
           <div className="detailActions">
             <a className="detailActionPrimary" href={requestFileUrl} download>
@@ -70,27 +102,41 @@ export default function CctvRequestPage() {
         <section className="seoTextBlock">
           <div className="sectionHeading">
             <FileText size={19} aria-hidden="true" />
-            <h2>신청 전 준비할 내용</h2>
+            <h2>필수 작성 항목</h2>
           </div>
           <p>
-            열람하려는 CCTV의 위치, 촬영 추정 일시, 사고 또는 확인 사유, 신청자 연락처를
-            미리 정리해두면 접수 과정이 수월합니다. 상세페이지에서 관리기관과 전화번호를
-            확인한 뒤 기관에 먼저 문의하는 것도 좋습니다.
+            청구내용 작성 화면에서는 CCTV 작성예시를 먼저 확인한 뒤, 아래 항목을 가능한 한
+            구체적으로 입력해야 합니다. 정보가 자세할수록 관리기관이 해당 영상을 찾기 쉽습니다.
           </p>
-          <p>
-            영상에는 다른 사람의 얼굴, 차량번호 등 개인정보가 포함될 수 있으므로 기관 판단에
-            따라 열람이 제한되거나 일부 비식별 처리된 형태로 제공될 수 있습니다.
-          </p>
+          <ul className="requestChecklist">
+            {requiredItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
         </section>
 
-        <section className="requestSteps" aria-label="CCTV 열람 신청 절차">
+        <section className="requestSteps" aria-label="CCTV 열람 신청 단계">
           {steps.map((step) => (
+            <article className="requestStep" key={step.title}>
+              <div>
+                <h2>{step.title}</h2>
+                <p>
+                  <strong>행동:</strong> {step.action}
+                </p>
+              </div>
+              <img src={step.image} alt={`${step.title} 화면 예시`} loading="lazy" />
+            </article>
+          ))}
+        </section>
+
+        <section className="requestSteps requestStepsCompact" aria-label="추가 참고 화면">
+          {extraImages.map((step) => (
             <article className="requestStep" key={step.title}>
               <div>
                 <h2>{step.title}</h2>
                 <p>{step.text}</p>
               </div>
-              <img src={step.image} alt={`${step.title} 예시 화면`} loading="lazy" />
+              <img src={step.image} alt={`${step.title} 화면 예시`} loading="lazy" />
             </article>
           ))}
         </section>

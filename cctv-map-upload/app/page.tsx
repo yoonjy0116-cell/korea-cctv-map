@@ -2,10 +2,11 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Cctv, Filter, Loader2, MapPin, Search } from "lucide-react";
+import { Cctv, Filter, Loader2, LocateFixed, MapPin, Search } from "lucide-react";
 import { cctvLocations, type CctvLocation } from "../data/cctvLocations";
 
 type KakaoMap = any;
+type LoadMode = "nearby" | "search" | "default";
 
 declare global {
   interface Window {
@@ -14,7 +15,6 @@ declare global {
 }
 
 const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
-const INITIAL_KEYWORD = "서울특별시 중구";
 const purposes = ["전체", "방범", "어린이보호", "교통", "시설안전"] as const;
 
 function escapeHtml(value = "") {
@@ -32,23 +32,24 @@ export default function Home() {
   const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any | null>(null);
   const [locations, setLocations] = useState<CctvLocation[]>(cctvLocations);
-  const [keywordInput, setKeywordInput] = useState(INITIAL_KEYWORD);
-  const [keyword, setKeyword] = useState(INITIAL_KEYWORD);
+  const [keywordInput, setKeywordInput] = useState("");
+  const [keyword, setKeyword] = useState("");
   const [purpose, setPurpose] = useState<(typeof purposes)[number]>("전체");
   const [selected, setSelected] = useState<CctvLocation | null>(cctvLocations[0]);
+  const [searchCenter, setSearchCenter] = useState(SEOUL_CITY_HALL);
+  const [loadMode, setLoadMode] = useState<LoadMode>("nearby");
   const [isMapReady, setIsMapReady] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
-  const [dataMessage, setDataMessage] = useState("검색결과를 불러오는 중입니다.");
+  const [dataMessage, setDataMessage] = useState("내 위치 주변 CCTV를 확인하는 중입니다.");
   const [mapError, setMapError] = useState("");
+  const [locationLabel, setLocationLabel] = useState("서울시청 주변");
 
   const filteredLocations = useMemo(() => locations, [locations]);
 
   const openInfoWindow = (item: CctvLocation, position: any) => {
     if (!kakaoMapRef.current || !window.kakao) return;
 
-    const detailUrl = item.slug
-      ? `/cctv/${encodeURIComponent(item.slug)}`
-      : "/";
+    const detailUrl = item.slug ? `/cctv/${encodeURIComponent(item.slug)}` : "/";
     const content = `
       <div class="markerInfo">
         <strong>${escapeHtml(item.name)}</strong>
@@ -96,16 +97,60 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!isMapReady || !mapRef.current || !window.kakao) return;
+
+    const center = new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng);
+    kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
+      center,
+      level: 5
+    });
+  }, [isMapReady]);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setSearchCenter(SEOUL_CITY_HALL);
+      setLocationLabel("서울시청 주변");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextCenter = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setSearchCenter(nextCenter);
+        setLocationLabel("내 위치 주변");
+
+        if (kakaoMapRef.current && window.kakao) {
+          kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(nextCenter.lat, nextCenter.lng));
+          kakaoMapRef.current.setLevel(5);
+        }
+      },
+      () => {
+        setSearchCenter(SEOUL_CITY_HALL);
+        setLocationLabel("서울시청 주변");
+      },
+      { enableHighAccuracy: false, maximumAge: 1000 * 60 * 10, timeout: 4500 }
+    );
+  }, []);
+
+  useEffect(() => {
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setIsDataLoading(true);
-      setDataMessage("검색결과를 불러오는 중입니다.");
+      setDataMessage(keyword ? "검색결과를 불러오는 중입니다." : `${locationLabel} CCTV를 불러오는 중입니다.`);
 
       try {
-        const params = new URLSearchParams({
-          keyword,
-          purpose
-        });
+        const params = new URLSearchParams({ purpose });
+
+        if (keyword) {
+          params.set("keyword", keyword);
+        } else {
+          params.set("lat", String(searchCenter.lat));
+          params.set("lng", String(searchCenter.lng));
+        }
+
         const response = await fetch(`/api/cctv?${params.toString()}`, {
           signal: controller.signal
         });
@@ -116,46 +161,64 @@ export default function Home() {
 
         const data = await response.json();
         const items = data.items as CctvLocation[];
+        const nextMode = (data.mode ?? "default") as LoadMode;
 
         setLocations(items);
         setSelected(items[0] ?? null);
+        setLoadMode(nextMode);
         setDataMessage(
-          items.length >= data.maxResults
-            ? "검색결과를 최대 500개까지 표시합니다."
-            : "검색결과입니다."
+          nextMode === "nearby"
+            ? `${locationLabel}에서 가까운 CCTV ${items.length.toLocaleString()}개를 표시합니다.`
+            : items.length >= data.maxResults
+              ? "검색결과를 최대 500개까지 표시합니다."
+              : "검색결과입니다."
         );
       } catch (error) {
         if (controller.signal.aborted) return;
         setLocations(cctvLocations);
         setSelected(cctvLocations[0]);
-        setDataMessage("검색결과를 불러오지 못해 예시 데이터를 표시합니다.");
+        setDataMessage("공공데이터를 불러오지 못해 예시 데이터를 표시합니다.");
       } finally {
         if (!controller.signal.aborted) {
           setIsDataLoading(false);
         }
       }
-    }, 250);
+    }, keyword ? 180 : 0);
 
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [keyword, purpose]);
+  }, [keyword, locationLabel, purpose, searchCenter]);
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setKeyword(keywordInput.trim());
   };
 
-  useEffect(() => {
-    if (!isMapReady || !mapRef.current || !window.kakao) return;
+  const handleNearby = () => {
+    setKeyword("");
+    setKeywordInput("");
+    setLoadMode("nearby");
 
-    const center = new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng);
-    kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
-      center,
-      level: 5
-    });
-  }, [isMapReady]);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const nextCenter = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setSearchCenter(nextCenter);
+          setLocationLabel("내 위치 주변");
+        },
+        () => {
+          setSearchCenter(SEOUL_CITY_HALL);
+          setLocationLabel("서울시청 주변");
+        },
+        { enableHighAccuracy: false, maximumAge: 1000 * 60 * 10, timeout: 4500 }
+      );
+    }
+  };
 
   useEffect(() => {
     if (!isMapReady || !kakaoMapRef.current || !window.kakao) return;
@@ -185,10 +248,20 @@ export default function Home() {
       bounds.extend(position);
     });
 
-    if (filteredLocations.length > 0 && keyword) {
-      kakaoMapRef.current.setBounds(bounds);
+    if (filteredLocations.length > 0) {
+      if (loadMode === "search" && keyword) {
+        kakaoMapRef.current.setBounds(bounds);
+        window.setTimeout(() => {
+          if (kakaoMapRef.current.getLevel() > 5) {
+            kakaoMapRef.current.setLevel(5);
+          }
+        }, 0);
+      } else {
+        kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(searchCenter.lat, searchCenter.lng));
+        kakaoMapRef.current.setLevel(5);
+      }
     }
-  }, [filteredLocations, isMapReady, keyword]);
+  }, [filteredLocations, isMapReady, keyword, loadMode, searchCenter]);
 
   const handleSelect = (item: CctvLocation) => {
     setSelected(item);
@@ -220,12 +293,16 @@ export default function Home() {
             <input
               value={keywordInput}
               onChange={(event) => setKeywordInput(event.target.value)}
-              placeholder="예: 서울시청, 역삼동, 해운대구"
+              placeholder="예: 소담동, 서울시청, 해운대구"
             />
             <button className="searchButton" disabled={isDataLoading} type="submit">
               {isDataLoading ? <Loader2 size={17} aria-hidden="true" /> : "검색"}
             </button>
           </label>
+
+          <button className="searchButton" onClick={handleNearby} type="button">
+            <LocateFixed size={16} aria-hidden="true" /> 주변 CCTV
+          </button>
 
           <div className="filterBlock">
             <div className="filterTitle">
@@ -252,7 +329,7 @@ export default function Home() {
         </aside>
 
         <div className="resultHeader">
-          <strong>검색결과 {filteredLocations.length.toLocaleString()}개</strong>
+          <strong>{loadMode === "nearby" && !keyword ? "주변 CCTV" : "검색결과"} {filteredLocations.length.toLocaleString()}개</strong>
           <span>{isDataLoading ? "불러오는 중" : "실시간 영상 제외"}</span>
         </div>
 
@@ -274,6 +351,7 @@ export default function Home() {
                 <em>{item.purpose}</em>
               </span>
               <small>{item.direction || "촬영방면정보 없음"}</small>
+              {typeof item.distance === "number" && <small>현재 위치에서 약 {(item.distance / 1000).toFixed(1)}km</small>}
             </button>
           ))}
         </div>
@@ -309,7 +387,7 @@ export default function Home() {
                 <dd>{selected.direction || "정보 없음"}</dd>
               </div>
               <div>
-                <dt>카메라 수</dt>
+                <dt>카메라대수</dt>
                 <dd>{selected.cameraCount}대</dd>
               </div>
             </dl>

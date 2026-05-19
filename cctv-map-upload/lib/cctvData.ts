@@ -8,9 +8,14 @@ import type { CctvLocation, CctvPurpose } from "../data/cctvLocations";
 const DATA_URL = "https://file.localdata.go.kr/file/cctv_info/info";
 const LOCAL_DATA_PATH = path.join(process.cwd(), "public", "data", "cctv.csv");
 const LOCAL_GZIP_DATA_PATH = path.join(process.cwd(), "public", "data", "cctv.csv.gz");
+const LOCAL_COMPACT_DATA_PATH = path.join(process.cwd(), "public", "data", "cctv.min.json.gz");
+const TILE_DIR = path.join(process.cwd(), "public", "data", "cctv-tiles");
+const TILE_SCALE = 10;
+
 const gunzipAsync = promisify(gunzip);
 
 let rowsCache: Promise<RawCctvRecord[]> | null = null;
+let itemsCache: Promise<CctvDetail[]> | null = null;
 
 export type RawCctvRecord = Record<string, string>;
 
@@ -28,7 +33,7 @@ export type CctvDetail = CctvLocation & {
   phone: string;
   dataDate: string;
   updatedAt: string;
-  raw: RawCctvRecord;
+  raw?: RawCctvRecord;
 };
 
 export function parseCsv(text: string) {
@@ -94,20 +99,6 @@ export function normalizePurpose(value: string): CctvPurpose {
   return "방범";
 }
 
-export function createSeoArea(record: RawCctvRecord) {
-  const address = pick(record, ["소재지도로명주소", "소재지지번주소", "설치위치"]);
-  const parts = address.split(/\s+/).filter(Boolean);
-  const dong = parts.find((part) => /[동읍면가로길]$/.test(part));
-
-  if (dong) {
-    const city = parts[0] ?? "";
-    const district = parts.find((part) => /[구군시]$/.test(part)) ?? "";
-    return [city, district, dong].filter(Boolean).join(" ");
-  }
-
-  return normalizeArea(parts.slice(0, 3).join(" ") || pick(record, ["관리기관명"]) || "전국");
-}
-
 export function normalizeArea(value: string) {
   const parts = value.split(/\s+/).filter(Boolean);
   const normalized: string[] = [];
@@ -121,12 +112,27 @@ export function normalizeArea(value: string) {
   return normalized.join(" ");
 }
 
+export function createSeoArea(record: RawCctvRecord) {
+  const address = pick(record, ["소재지도로명주소", "소재지지번주소", "설치위치"]);
+  const parts = address.split(/\s+/).filter(Boolean);
+  const dong = parts.find((part) => /[동읍면가로길]$/.test(part));
+
+  if (dong) {
+    const city = parts[0] ?? "";
+    const district = parts.find((part) => /[구군시]$/.test(part)) ?? "";
+    return normalizeArea([city, district, dong].filter(Boolean).join(" "));
+  }
+
+  return normalizeArea(parts.slice(0, 3).join(" ") || pick(record, ["관리기관명"]) || "전국");
+}
+
 export function createSlug(value: string, managementNumber: string) {
   return `${value} ${managementNumber}`
     .trim()
     .replace(/[^\p{L}\p{N}\s-]/gu, "")
     .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+    .replace(/-+/g, "-")
+    .slice(0, 160);
 }
 
 export function createDisplayName(record: RawCctvRecord) {
@@ -156,7 +162,7 @@ export function toCctvDetail(record: RawCctvRecord): CctvDetail | null {
     seoArea,
     seoTitle,
     slug: createSlug(seoTitle, managementNumber),
-    region: manager,
+    region: seoArea,
     address,
     roadAddress,
     lotAddress,
@@ -211,40 +217,93 @@ export async function getCctvRows() {
   return rowsCache;
 }
 
-export async function findCctvByManagementNumber(managementNumber: string) {
-  const rows = await getCctvRows();
+export async function loadCctvItems() {
+  if (itemsCache) return itemsCache;
 
-  for (const record of rows) {
-    const item = toCctvDetail(record);
-    if (!item) continue;
+  itemsCache = (async () => {
+    try {
+      const gzipBuffer = await readFile(LOCAL_COMPACT_DATA_PATH);
+      const jsonBuffer = await gunzipAsync(gzipBuffer);
+      return JSON.parse(jsonBuffer.toString("utf8")) as CctvDetail[];
+    } catch {
+      const rows = await getCctvRows();
+      return rows.map(toCctvDetail).filter(Boolean) as CctvDetail[];
+    }
+  })();
 
-    if (item.managementNumber === managementNumber || item.slug === managementNumber) {
-      return item;
+  return itemsCache;
+}
+
+function tileName(lat: number, lng: number) {
+  return `t_${Math.floor(lat * TILE_SCALE)}_${Math.floor(lng * TILE_SCALE)}.json.gz`;
+}
+
+export async function loadNearbyTiles(lat: number, lng: number, radius = 1) {
+  const centerLat = Math.floor(lat * TILE_SCALE);
+  const centerLng = Math.floor(lng * TILE_SCALE);
+  const tasks: Promise<CctvLocation[]>[] = [];
+
+  for (let y = centerLat - radius; y <= centerLat + radius; y += 1) {
+    for (let x = centerLng - radius; x <= centerLng + radius; x += 1) {
+      const filePath = path.join(TILE_DIR, `t_${y}_${x}.json.gz`);
+      tasks.push(
+        readFile(filePath)
+          .then(gunzipAsync)
+          .then((buffer) => JSON.parse(buffer.toString("utf8")) as CctvLocation[])
+          .catch(() => [])
+      );
     }
   }
 
-  return null;
+  const chunks = await Promise.all(tasks);
+  return chunks.flat();
+}
+
+export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const earth = 6371000;
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+
+  return 2 * earth * Math.asin(Math.sqrt(h));
+}
+
+export async function findCctvByManagementNumber(managementNumber: string) {
+  const items = await loadCctvItems();
+  return items.find((item) => item.managementNumber === managementNumber || item.slug === managementNumber) ?? null;
 }
 
 export async function getCctvIds(offset = 0, limit = 50000) {
-  const rows = await getCctvRows();
-
-  return rows
-    .slice(offset, offset + limit)
-    .map((record) => pick(record, ["관리번호"]))
-    .filter(Boolean);
+  const items = await loadCctvItems();
+  return items.slice(offset, offset + limit).map((item) => item.managementNumber).filter(Boolean);
 }
 
 export async function getCctvPageSlugs(offset = 0, limit = 50000) {
-  const rows = await getCctvRows();
-
-  return rows
-    .slice(offset, offset + limit)
-    .map((record) => toCctvDetail(record)?.slug)
-    .filter(Boolean) as string[];
+  const items = await loadCctvItems();
+  return items.slice(offset, offset + limit).map((item) => item.slug).filter(Boolean);
 }
 
 export async function countCctvRows() {
-  const rows = await getCctvRows();
-  return rows.length;
+  const items = await loadCctvItems();
+  return items.length;
 }
+
+export async function getNearbyCctvs(target: CctvLocation, limit = 8) {
+  const items = await loadCctvItems();
+
+  return items
+    .filter((item) => item.managementNumber !== target.managementNumber)
+    .map((item) => ({
+      ...item,
+      distance: Math.round(distanceMeters(target, item))
+    }))
+    .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0))
+    .slice(0, limit);
+}
+
+export { tileName };

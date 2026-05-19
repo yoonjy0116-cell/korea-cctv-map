@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, FileText, MapPin } from "lucide-react";
 
-import { findCctvByManagementNumber } from "../../../lib/cctvData";
+import { findCctvByManagementNumber, getNearbyCctvs } from "../../../lib/cctvData";
 
 type Props = {
   params: Promise<{
@@ -13,6 +13,12 @@ type Props = {
 
 function compact(value: string) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function formatDistance(distance?: number) {
+  if (typeof distance !== "number") return "";
+  if (distance < 1000) return `약 ${distance.toLocaleString()}m`;
+  return `약 ${(distance / 1000).toFixed(1)}km`;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -30,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = `${item.seoArea} CCTV 위치 정보`;
   const description = compact(
-    `${item.seoArea} CCTV 위치, 설치목적, 촬영방면정보, 카메라대수, 관리기관 정보를 공공데이터 기준으로 확인할 수 있습니다. 주소: ${item.address}`
+    `${item.address} CCTV 위치, 설치목적, 촬영방면정보, 카메라대수, 관리기관 정보를 공공데이터 기준으로 확인할 수 있습니다. 실시간 영상은 제공하지 않습니다.`
   );
 
   return {
@@ -41,6 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${item.seoArea} CCTV 위치`,
       `${item.seoArea} 방범 CCTV`,
       `${item.address} CCTV`,
+      `${item.address} CCTV 위치`,
       "전국 CCTV 지도",
       "공공데이터 CCTV"
     ],
@@ -65,7 +72,8 @@ export default async function CctvDetailPage({ params }: Props) {
 
   const pageUrl = `https://cctv.idlun.com/cctv/${encodeURIComponent(item.slug)}`;
   const title = item.seoTitle;
-  const description = `${item.seoArea} CCTV 위치와 관리 정보를 공공데이터 기준으로 정리한 상세 페이지입니다.`;
+  const nearbyCctvs = await getNearbyCctvs(item, 8);
+  const description = `${item.address}에 등록된 CCTV 위치와 관리 정보를 공공데이터 기준으로 정리한 상세 페이지입니다.`;
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Place",
@@ -109,15 +117,15 @@ export default async function CctvDetailPage({ params }: Props) {
       <div className="detailShell">
         <Link className="backLink" href="/">
           <ArrowLeft size={18} aria-hidden="true" />
-          지도 돌아가기
+          지도로 돌아가기
         </Link>
 
         <section className="detailHero">
           <p className="eyebrow">공공데이터 CCTV 위치</p>
           <h1>{title}</h1>
           <p>
-            {item.address}에 등록된 CCTV의 설치목적, 촬영방면정보, 카메라대수,
-            관리기관 정보를 공공데이터 기준으로 확인할 수 있습니다.
+            {item.address} CCTV의 설치목적, 촬영방면정보, 카메라대수, 관리기관 정보를
+            공공데이터 기준으로 확인할 수 있습니다.
           </p>
           <div className="detailActions">
             <Link className="detailActionPrimary" href="/cctv-request">
@@ -127,17 +135,20 @@ export default async function CctvDetailPage({ params }: Props) {
           </div>
         </section>
 
+        <aside className="adSlot adSlotDetailTop" aria-label="상단 광고 영역">
+          광고 영역
+        </aside>
+
         <section className="seoTextBlock" aria-label={`${item.seoArea} CCTV 안내`}>
           <h2>{item.seoArea} CCTV 안내</h2>
           <p>
             이 페이지는 {item.seoArea} 주변 CCTV 위치를 찾는 사용자가 주소와 관리 정보를
-            빠르게 확인할 수 있도록 구성한 상세 정보 페이지입니다. 등록 주소는
+            빠르게 확인할 수 있도록 만든 상세 정보 페이지입니다. 등록 주소는
             <strong> {item.address}</strong>이며, 설치목적은 <strong>{item.purpose}</strong>입니다.
           </p>
           <p>
-            CCTV 영상 열람이 필요한 경우에는 해당 CCTV를 관리하는 기관의 절차에 따라 신청해야
-            합니다. 이 사이트는 실시간 영상이나 녹화 영상을 제공하지 않으며, 위치 확인과 관리
-            정보 안내를 목적으로 합니다.
+            CCTV 영상 열람이 필요한 경우에는 해당 CCTV를 관리하는 기관의 절차에 따라 신청해야 합니다.
+            이 사이트는 실시간 영상이나 녹화 영상을 제공하지 않으며, 위치 확인과 관리 정보 안내를 목적으로 합니다.
           </p>
         </section>
 
@@ -156,10 +167,34 @@ export default async function CctvDetailPage({ params }: Props) {
           </dl>
         </section>
 
-        <section className="sourceBlock" aria-label="출처 및 URL">
-          <h2>출처 및 URL</h2>
+        <aside className="adSlot adSlotDetailMiddle" aria-label="본문 광고 영역">
+          광고 영역
+        </aside>
+
+        <section className="nearbyBlock" aria-label="주변 CCTV 리스트">
+          <h2>주변 CCTV</h2>
+          <p>{item.address} 근처에 등록된 CCTV 위치 정보입니다.</p>
+          <div className="nearbyList">
+            {nearbyCctvs.map((nearby) => (
+              <Link
+                className="nearbyItem"
+                href={`/cctv/${encodeURIComponent(nearby.slug)}`}
+                key={nearby.managementNumber}
+              >
+                <strong>{nearby.name}</strong>
+                <span>
+                  {nearby.address} · {nearby.purpose}
+                  {typeof nearby.distance === "number" ? ` · ${formatDistance(nearby.distance)}` : ""}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="sourceBlock" aria-label="출처">
+          <h2>출처</h2>
           <p>
-            본 페이지의 CCTV 위치 및 관리 정보는 공공데이터 기반 자료를 활용해 구성했습니다.
+            본 페이지의 CCTV 위치 및 관리 정보는 공공데이터 기반 자료를 사용해 구성했습니다.
           </p>
           <ul>
             <li>
@@ -169,7 +204,6 @@ export default async function CctvDetailPage({ params }: Props) {
                 <ExternalLink size={14} aria-hidden="true" />
               </a>
             </li>
-            <li>페이지 URL: {pageUrl}</li>
           </ul>
         </section>
       </div>

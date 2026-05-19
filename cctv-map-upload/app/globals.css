@@ -319,6 +319,16 @@ h1 {
   margin-top: 14px;
 }
 
+.adSlotDetailTop {
+  min-height: 96px;
+  margin-top: 16px;
+}
+
+.adSlotDetailMiddle {
+  min-height: 250px;
+  margin-top: 16px;
+}
+
 .mapArea {
   min-height: 100vh;
   position: relative;
@@ -483,6 +493,17 @@ dd {
   margin-bottom: 0;
 }
 
+.requestChecklist {
+  color: #36464f;
+  line-height: 1.7;
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.requestChecklist li + li {
+  margin-top: 4px;
+}
+
 .detailActions {
   display: flex;
   flex-wrap: wrap;
@@ -523,6 +544,10 @@ dd {
   margin-top: 16px;
 }
 
+.requestStepsCompact .requestStep {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.9fr);
+}
+
 .requestStep {
   align-items: center;
   background: #fff;
@@ -558,6 +583,56 @@ dd {
   border-radius: 8px;
   margin-top: 16px;
   padding: 20px;
+}
+
+.nearbyBlock {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 20px;
+}
+
+.nearbyBlock h2 {
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+
+.nearbyBlock p {
+  color: #36464f;
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+
+.nearbyList {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.nearbyItem {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: inherit;
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+  text-decoration: none;
+}
+
+.nearbyItem:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.1);
+}
+
+.nearbyItem strong {
+  line-height: 1.4;
+}
+
+.nearbyItem span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .sourceBlock h2 {
@@ -739,7 +814,8 @@ dd {
   }
 
   .detailGrid,
-  .rawGrid {
+  .rawGrid,
+  .nearbyList {
     grid-template-columns: 1fr;
   }
 
