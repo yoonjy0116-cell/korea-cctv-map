@@ -518,11 +518,7 @@ export default function Home() {
 
           <p className="dataMessage">{dataMessage}</p>
 
-          <div
-            className="list"
-            onTouchMove={(event) => event.stopPropagation()}
-            onWheel={(event) => event.stopPropagation()}
-          >
+          <div className="list">
             {filteredLocations.length === 0 && !isDataLoading && (
               <div className="emptyState">현재 지도 화면 안에 표시할 CCTV가 없습니다. 지도를 조금 움직이거나 확대해 보세요.</div>
             )}
