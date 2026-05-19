@@ -13,9 +13,11 @@ declare global {
   }
 }
 
+const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
+const INITIAL_KEYWORD = "서울특별시 중구";
 const purposes = ["전체", "방범", "어린이보호", "교통", "시설안전"] as const;
 
-function escapeHtml(value: string) {
+function escapeHtml(value = "") {
   return value
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -30,13 +32,13 @@ export default function Home() {
   const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any | null>(null);
   const [locations, setLocations] = useState<CctvLocation[]>(cctvLocations);
-  const [keywordInput, setKeywordInput] = useState("");
-  const [keyword, setKeyword] = useState("");
+  const [keywordInput, setKeywordInput] = useState(INITIAL_KEYWORD);
+  const [keyword, setKeyword] = useState(INITIAL_KEYWORD);
   const [purpose, setPurpose] = useState<(typeof purposes)[number]>("전체");
   const [selected, setSelected] = useState<CctvLocation | null>(cctvLocations[0]);
   const [isMapReady, setIsMapReady] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
-  const [dataMessage, setDataMessage] = useState("공공데이터를 불러오는 중입니다.");
+  const [dataMessage, setDataMessage] = useState("검색결과를 불러오는 중입니다.");
   const [mapError, setMapError] = useState("");
 
   const filteredLocations = useMemo(() => locations, [locations]);
@@ -51,14 +53,15 @@ export default function Home() {
       <div class="markerInfo">
         <strong>${escapeHtml(item.name)}</strong>
         <span>${escapeHtml(item.address)}</span>
-        <small>카메라 ${item.cameraCount}대 · ${escapeHtml(item.purpose)}</small>
+        <small>${escapeHtml(item.purpose)} · 카메라 ${item.cameraCount}대</small>
         ${item.managementNumber ? `<a href="${detailUrl}">자세히 보기</a>` : ""}
       </div>
     `;
 
     if (!infoWindowRef.current) {
       infoWindowRef.current = new window.kakao.maps.InfoWindow({
-        removable: true
+        removable: true,
+        zIndex: 1000
       });
     }
 
@@ -96,7 +99,7 @@ export default function Home() {
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setIsDataLoading(true);
-      setDataMessage(keyword ? `"${keyword}" 검색 결과를 불러오는 중입니다.` : "공공데이터를 불러오는 중입니다.");
+      setDataMessage("검색결과를 불러오는 중입니다.");
 
       try {
         const params = new URLSearchParams({
@@ -118,20 +121,20 @@ export default function Home() {
         setSelected(items[0] ?? null);
         setDataMessage(
           items.length >= data.maxResults
-            ? `공공데이터 결과를 ${data.maxResults.toLocaleString()}개까지 표시합니다.`
-            : "공공데이터를 기준으로 표시 중입니다."
+            ? "검색결과를 최대 500개까지 표시합니다."
+            : "검색결과입니다."
         );
       } catch (error) {
         if (controller.signal.aborted) return;
         setLocations(cctvLocations);
         setSelected(cctvLocations[0]);
-        setDataMessage("공공데이터 연결 실패로 예시 데이터를 표시합니다.");
+        setDataMessage("검색결과를 불러오지 못해 예시 데이터를 표시합니다.");
       } finally {
         if (!controller.signal.aborted) {
           setIsDataLoading(false);
         }
       }
-    }, 350);
+    }, 250);
 
     return () => {
       controller.abort();
@@ -147,10 +150,10 @@ export default function Home() {
   useEffect(() => {
     if (!isMapReady || !mapRef.current || !window.kakao) return;
 
-    const center = new window.kakao.maps.LatLng(36.5, 127.8);
+    const center = new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng);
     kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
       center,
-      level: 12
+      level: 5
     });
   }, [isMapReady]);
 
@@ -167,10 +170,12 @@ export default function Home() {
       const marker = new window.kakao.maps.Marker({
         map: kakaoMapRef.current,
         position,
-        title: item.name
+        title: item.name,
+        zIndex: 1
       });
 
       window.kakao.maps.event.addListener(marker, "click", () => {
+        marker.setZIndex(20);
         setSelected(item);
         kakaoMapRef.current.panTo(position);
         openInfoWindow(item, position);
@@ -180,10 +185,10 @@ export default function Home() {
       bounds.extend(position);
     });
 
-    if (filteredLocations.length > 0) {
+    if (filteredLocations.length > 0 && keyword) {
       kakaoMapRef.current.setBounds(bounds);
     }
-  }, [filteredLocations, isMapReady]);
+  }, [filteredLocations, isMapReady, keyword]);
 
   const handleSelect = (item: CctvLocation) => {
     setSelected(item);
@@ -205,7 +210,7 @@ export default function Home() {
           </div>
           <div>
             <p className="eyebrow">공공데이터 기반</p>
-            <h1>전국 방범용 CCTV 지도</h1>
+            <h1>전국 CCTV 지도</h1>
           </div>
         </div>
 
@@ -215,7 +220,7 @@ export default function Home() {
             <input
               value={keywordInput}
               onChange={(event) => setKeywordInput(event.target.value)}
-              placeholder="예: 서울, 해운대구, 세종대로"
+              placeholder="예: 서울시청, 역삼동, 해운대구"
             />
             <button className="searchButton" disabled={isDataLoading} type="submit">
               {isDataLoading ? <Loader2 size={17} aria-hidden="true" /> : "검색"}
@@ -242,8 +247,12 @@ export default function Home() {
           </div>
         </form>
 
+        <aside className="adSlot adSlotSidebar" aria-label="광고 영역">
+          광고 영역
+        </aside>
+
         <div className="resultHeader">
-          <strong>{filteredLocations.length.toLocaleString()}개 위치</strong>
+          <strong>검색결과 {filteredLocations.length.toLocaleString()}개</strong>
           <span>{isDataLoading ? "불러오는 중" : "실시간 영상 제외"}</span>
         </div>
 
@@ -251,7 +260,7 @@ export default function Home() {
 
         <div className="list">
           {filteredLocations.length === 0 && !isDataLoading && (
-            <div className="emptyState">검색 결과가 없습니다. 지역명이나 도로명을 바꿔서 검색해보세요.</div>
+            <div className="emptyState">검색결과가 없습니다. 지역명이나 도로명을 바꿔서 검색해보세요.</div>
           )}
           {filteredLocations.map((item) => (
             <button
@@ -264,13 +273,7 @@ export default function Home() {
                 <strong>{item.name}</strong>
                 <em>{item.purpose}</em>
               </span>
-              <span>{item.address}</span>
-              <small>
-                카메라 {item.cameraCount}대 · {item.manager}
-              </small>
-              {item.managementNumber && (
-                <small>관리번호 {item.managementNumber}</small>
-              )}
+              <small>{item.direction || "촬영방면정보 없음"}</small>
             </button>
           ))}
         </div>
@@ -289,36 +292,30 @@ export default function Home() {
         {selected && (
           <aside className="detailPanel" aria-label="선택한 CCTV 상세정보">
             <div>
-              <p className="eyebrow">{selected.region}</p>
+              <p className="eyebrow">{selected.manager}</p>
               <h2>{selected.name}</h2>
             </div>
             <dl>
-              {selected.managementNumber && (
-                <div>
-                  <dt>관리번호</dt>
-                  <dd>{selected.managementNumber}</dd>
-                </div>
-              )}
               <div>
                 <dt>주소</dt>
                 <dd>{selected.address}</dd>
               </div>
               <div>
-                <dt>목적</dt>
+                <dt>설치목적</dt>
                 <dd>{selected.purpose}</dd>
+              </div>
+              <div>
+                <dt>촬영방면정보</dt>
+                <dd>{selected.direction || "정보 없음"}</dd>
               </div>
               <div>
                 <dt>카메라 수</dt>
                 <dd>{selected.cameraCount}대</dd>
               </div>
-              <div>
-                <dt>관리기관</dt>
-                <dd>{selected.manager}</dd>
-              </div>
             </dl>
             {selected.managementNumber && (
               <Link className="detailLink" href={`/cctv/${encodeURIComponent(selected.managementNumber)}`}>
-                전체 상세정보 보기
+                자세히 보기
               </Link>
             )}
           </aside>

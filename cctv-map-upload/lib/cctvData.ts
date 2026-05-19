@@ -9,6 +9,7 @@ const DATA_URL = "https://file.localdata.go.kr/file/cctv_info/info";
 const LOCAL_DATA_PATH = path.join(process.cwd(), "public", "data", "cctv.csv");
 const LOCAL_GZIP_DATA_PATH = path.join(process.cwd(), "public", "data", "cctv.csv.gz");
 const gunzipAsync = promisify(gunzip);
+
 let rowsCache: Promise<RawCctvRecord[]> | null = null;
 
 export type RawCctvRecord = Record<string, string>;
@@ -92,26 +93,23 @@ export function normalizePurpose(value: string): CctvPurpose {
   return "방범";
 }
 
-export function createDisplayName(record: RawCctvRecord) {
-  const address = pick(record, ["소재지도로명주소", "소재지지번주소", "설치위치"]);
-  const manager = pick(record, ["관리기관명"]);
-  const district = address.match(/^[^\s]+(?:\s+[^\s]+){0,2}/)?.[0] ?? manager;
-
-  return `${district || "전국"} CCTV`;
-}
-
 export function createSeoArea(record: RawCctvRecord) {
   const address = pick(record, ["소재지도로명주소", "소재지지번주소", "설치위치"]);
   const parts = address.split(/\s+/).filter(Boolean);
   const dong = parts.find((part) => /[동읍면가로길]$/.test(part));
 
-  if (dong && parts.length >= 2) {
+  if (dong) {
     const city = parts[0] ?? "";
     const district = parts.find((part) => /[구군시]$/.test(part)) ?? "";
     return [city, district, dong].filter(Boolean).join(" ");
   }
 
   return parts.slice(0, 3).join(" ") || pick(record, ["관리기관명"]) || "전국";
+}
+
+export function createDisplayName(record: RawCctvRecord) {
+  const address = pick(record, ["소재지도로명주소", "소재지지번주소", "설치위치"]);
+  return `${address || createSeoArea(record)} CCTV`;
 }
 
 export function toCctvDetail(record: RawCctvRecord): CctvDetail | null {
@@ -187,15 +185,6 @@ export async function getCctvRows() {
   });
 
   return rowsCache;
-}
-
-export async function getFreshCctvRows() {
-  const text = await loadCctvCsvText();
-  const [headers = [], ...rows] = parseCsv(text);
-
-  return rows.map((row) =>
-    Object.fromEntries(headers.map((header, index) => [header.trim(), row[index] ?? ""]))
-  );
 }
 
 export async function findCctvByManagementNumber(managementNumber: string) {

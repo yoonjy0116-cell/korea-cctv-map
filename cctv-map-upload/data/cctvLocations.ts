@@ -11,6 +11,7 @@ export type CctvLocation = {
   lat: number;
   lng: number;
   managementNumber?: string;
+  direction?: string;
 };
 
 export const cctvLocations: CctvLocation[] = [

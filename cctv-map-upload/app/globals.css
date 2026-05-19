@@ -251,9 +251,10 @@ h1 {
 
 .markerInfo {
   display: grid;
-  gap: 5px;
-  max-width: 260px;
-  padding: 12px;
+  gap: 4px;
+  max-width: 220px;
+  min-width: 180px;
+  padding: 10px;
 }
 
 .markerInfo strong {
@@ -279,8 +280,27 @@ h1 {
   font-weight: 700;
   justify-content: center;
   margin-top: 4px;
+  max-width: 100%;
   min-height: 30px;
+  padding: 0 10px;
   text-decoration: none;
+  width: max-content;
+}
+
+.adSlot {
+  align-items: center;
+  background: #f7fafb;
+  border: 1px dashed #b9c8d1;
+  border-radius: 8px;
+  color: #7b8992;
+  display: flex;
+  font-size: 12px;
+  justify-content: center;
+}
+
+.adSlotSidebar {
+  min-height: 90px;
+  margin-top: 14px;
 }
 
 .mapArea {
@@ -541,6 +561,11 @@ dd {
 
   .resultHeader {
     margin: 12px 0 6px;
+  }
+
+  .adSlotSidebar {
+    min-height: 50px;
+    margin-top: 10px;
   }
 
   .dataMessage {
