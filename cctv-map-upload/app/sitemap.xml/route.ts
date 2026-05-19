@@ -14,9 +14,8 @@ export async function GET() {
   const sitemaps = Array.from({ length: pageCount }, (_, index) => {
     return `<sitemap><loc>${SITE_URL}/sitemaps/cctv/${index}.xml</loc></sitemap>`;
   }).join("");
-  const staticSitemaps = `<sitemap><loc>${SITE_URL}/sitemaps/region</loc></sitemap>`;
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${staticSitemaps}${sitemaps}</sitemapindex>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${sitemaps}</sitemapindex>`;
 
   return new NextResponse(xml, {
     headers: {

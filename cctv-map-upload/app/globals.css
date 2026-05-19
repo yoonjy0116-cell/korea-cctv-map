@@ -1,13 +1,12 @@
 :root {
-  --ink: #162033;
-  --muted: #60718a;
-  --line: #d7e2f0;
+  --ink: #172026;
+  --muted: #63717b;
+  --line: #d9e1e7;
   --panel: #ffffff;
-  --soft: #f4f8fd;
-  --accent: #1a56db;
-  --accent-strong: #1647b8;
-  --accent-soft: #e8f1ff;
-  --warn: #b56218;
+  --soft: #f4f7f9;
+  --accent: #156f78;
+  --accent-strong: #0f5860;
+  --warn: #9a5b12;
 }
 
 * {
@@ -18,7 +17,6 @@ html,
 body {
   height: 100%;
   margin: 0;
-  overflow: hidden;
 }
 
 body {
@@ -38,7 +36,6 @@ input {
   height: 100dvh;
   min-height: 100dvh;
   overflow: hidden;
-  overscroll-behavior: none;
 }
 
 .sidebar {
@@ -47,16 +44,9 @@ input {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  max-height: 100dvh;
   min-height: 0;
   overflow: hidden;
   padding: 24px;
-}
-
-.sidebarTop {
-  flex: 0 0 auto;
-  max-height: min-content;
-  min-height: 0;
 }
 
 .mobilePanelHandle {
@@ -66,14 +56,13 @@ input {
 .brand {
   align-items: center;
   display: flex;
-  flex: 0 0 auto;
   gap: 14px;
   margin-bottom: 22px;
 }
 
 .brandIcon {
   align-items: center;
-  background: var(--accent-soft);
+  background: #dff0ed;
   border-radius: 8px;
   color: var(--accent);
   display: flex;
@@ -104,7 +93,6 @@ h1 {
 
 .controls {
   display: grid;
-  flex: 0 0 auto;
   gap: 16px;
 }
 
@@ -119,7 +107,7 @@ h1 {
 
 .searchBox:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.14);
+  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.14);
 }
 
 .searchBox input {
@@ -196,19 +184,9 @@ h1 {
   font-weight: 700;
 }
 
-.resultsPanel {
-  display: flex;
-  flex: 1 1 0;
-  flex-direction: column;
-  height: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
 .resultHeader {
   align-items: flex-end;
   display: flex;
-  flex: 0 0 auto;
   justify-content: space-between;
   margin: 22px 0 12px;
 }
@@ -220,28 +198,17 @@ h1 {
 
 .dataMessage {
   color: var(--muted);
-  flex: 0 0 auto;
   font-size: 13px;
   line-height: 1.45;
   margin-bottom: 12px;
 }
 
 .list {
-  flex: 1 1 0;
+  display: grid;
+  gap: 10px;
   min-height: 0;
-  max-height: none;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: auto;
   padding-right: 4px;
-  scrollbar-gutter: stable;
-  touch-action: pan-y;
-  width: 100%;
-  -webkit-overflow-scrolling: touch;
-}
-
-.list > * + * {
-  margin-top: 10px;
 }
 
 .listItem {
@@ -252,10 +219,8 @@ h1 {
   cursor: pointer;
   display: grid;
   gap: 7px;
-  max-width: 100%;
   padding: 14px;
   text-align: left;
-  width: 100%;
 }
 
 .inlineExternalLink {
@@ -268,7 +233,7 @@ h1 {
 
 .listItem.selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
+  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.12);
 }
 
 .itemTop {
@@ -276,17 +241,10 @@ h1 {
   display: flex;
   gap: 10px;
   justify-content: space-between;
-  min-width: 0;
-  width: 100%;
-}
-
-.itemTop strong {
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
 .itemTop em {
-  background: var(--accent-soft);
+  background: #eaf4f2;
   border-radius: 999px;
   color: var(--accent-strong);
   flex: 0 0 auto;
@@ -362,40 +320,18 @@ h1 {
 
 .adSlot {
   align-items: center;
-  background: #f7faff;
-  border: 1px dashed #b9ccec;
+  background: #f7fafb;
+  border: 1px dashed #b9c8d1;
   border-radius: 8px;
-  color: #7184a4;
-  contain: layout paint;
+  color: #7b8992;
   display: flex;
   font-size: 12px;
   justify-content: center;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.adSlot .adsbygoogle {
-  min-height: inherit;
-  max-width: 100%;
-  width: 100%;
-}
-
-.adSlot iframe {
-  max-width: 100% !important;
-}
-
-.adsbygoogle-noablate {
-  display: none !important;
 }
 
 .adSlotSidebar {
-  flex: 0 0 auto;
   min-height: 90px;
   margin-top: 14px;
-}
-
-.adSlotList {
-  min-height: 92px;
 }
 
 .adSlotDetailTop {
@@ -409,16 +345,13 @@ h1 {
 }
 
 .mapArea {
-  height: 100dvh;
-  min-height: 100dvh;
-  overflow: hidden;
+  min-height: 100vh;
   position: relative;
 }
 
 .mapCanvas {
   height: 100%;
-  min-height: 100dvh;
-  overflow: hidden;
+  min-height: 100vh;
   width: 100%;
 }
 
@@ -734,7 +667,7 @@ dd {
 
 .nearbyItem:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
+  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.1);
 }
 
 .nearbyItem strong {
@@ -797,74 +730,10 @@ dd {
   margin: 0;
 }
 
-.regionStats {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  margin-top: 16px;
-}
-
-.regionStatCard {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  display: grid;
-  gap: 5px;
-  padding: 16px;
-}
-
-.regionStatCard strong {
-  color: var(--accent);
-  font-size: 22px;
-}
-
-.regionStatCard span {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.regionLinkGrid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.regionLink,
-.regionCctvItem {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  color: inherit;
-  display: grid;
-  gap: 6px;
-  padding: 13px;
-  text-decoration: none;
-}
-
-.regionLink:hover,
-.regionCctvItem:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.1);
-}
-
-.regionLink span,
-.regionCctvItem span,
-.regionCctvItem small {
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-.regionCctvList {
-  display: grid;
-  gap: 10px;
-}
-
 @media (max-width: 860px) {
   .page {
     display: block;
-    height: 100dvh;
     min-height: 100dvh;
-    overflow: hidden;
   }
 
   .sidebar {
@@ -875,27 +744,17 @@ dd {
     bottom: 0;
     box-shadow: 0 -18px 35px rgba(23, 32, 38, 0.16);
     left: 0;
-    display: flex;
-    flex-direction: column;
-    height: 42dvh;
-    max-height: min(42dvh, calc(100dvh - 12px));
+    max-height: 36dvh;
     min-height: 0;
     padding: 8px 14px 14px;
     position: fixed;
     right: 0;
-    transition: height 0.2s ease, max-height 0.2s ease;
+    transition: max-height 0.2s ease;
     z-index: 20;
   }
 
   .sidebar.expanded {
-    height: 58dvh;
-    max-height: min(58dvh, calc(100dvh - 12px));
-  }
-
-  .sidebar.collapsed .sidebarTop .brand,
-  .sidebar.collapsed .sidebarTop .nearbyButton,
-  .sidebar.collapsed .sidebarTop .filterBlock {
-    display: none;
+    max-height: 78dvh;
   }
 
   .mobilePanelHandle {
@@ -914,7 +773,7 @@ dd {
   }
 
   .mobilePanelHandle span {
-    background: #bed0eb;
+    background: #c5d0d7;
     border-radius: 999px;
     height: 4px;
     left: 50%;
@@ -949,7 +808,6 @@ dd {
 
   .controls {
     gap: 10px;
-    min-height: 0;
   }
 
   .nearbyButton {
@@ -985,12 +843,6 @@ dd {
 
   .adSlotSidebar {
     display: none;
-    min-height: 64px;
-    margin-top: 10px;
-  }
-
-  .adSlotList {
-    min-height: 86px;
   }
 
   .dataMessage {
@@ -999,14 +851,7 @@ dd {
   }
 
   .list {
-    flex: 1 1 0;
-    min-height: 0;
-    max-height: 100%;
-    overflow-y: auto;
-  }
-
-  .list > * + * {
-    margin-top: 8px;
+    gap: 8px;
   }
 
   .listItem {
@@ -1016,14 +861,12 @@ dd {
 
   .mapArea {
     inset: 0;
-    height: 100svh;
     min-height: 100dvh;
     position: fixed;
     z-index: 1;
   }
 
   .mapCanvas {
-    height: 100svh;
     min-height: 100dvh;
   }
 
@@ -1055,9 +898,7 @@ dd {
 
   .detailGrid,
   .rawGrid,
-  .nearbyList,
-  .regionStats,
-  .regionLinkGrid {
+  .nearbyList {
     grid-template-columns: 1fr;
   }
 

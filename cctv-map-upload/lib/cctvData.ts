@@ -16,7 +16,6 @@ const gunzipAsync = promisify(gunzip);
 
 let rowsCache: Promise<RawCctvRecord[]> | null = null;
 let itemsCache: Promise<CctvDetail[]> | null = null;
-const tileCache = new Map<string, Promise<CctvLocation[]>>();
 
 export type RawCctvRecord = Record<string, string>;
 
@@ -34,7 +33,6 @@ export type CctvDetail = CctvLocation & {
   phone: string;
   dataDate: string;
   updatedAt: string;
-  rawPurpose: string;
   raw?: RawCctvRecord;
 };
 
@@ -98,8 +96,7 @@ export function normalizePurpose(value: string): CctvPurpose {
   if (value.includes("어린이")) return "어린이보호";
   if (value.includes("교통")) return "교통";
   if (value.includes("시설") || value.includes("재난")) return "시설안전";
-  if (value.includes("생활방범") || value.includes("차량방범") || value.includes("방범")) return "방범";
-  return "기타";
+  return "방범";
 }
 
 export function normalizeArea(value: string) {
@@ -170,7 +167,6 @@ export function toCctvDetail(record: RawCctvRecord): CctvDetail | null {
     roadAddress,
     lotAddress,
     purpose: normalizePurpose(rawPurpose),
-    rawPurpose: rawPurpose || "기타",
     cameraCount: Number(pick(record, ["카메라대수", "카메라수"])) || 1,
     manager,
     pixel: pick(record, ["카메라화소수"]),
@@ -242,20 +238,6 @@ function tileName(lat: number, lng: number) {
   return `t_${Math.floor(lat * TILE_SCALE)}_${Math.floor(lng * TILE_SCALE)}.json.gz`;
 }
 
-function loadTileByName(name: string) {
-  const cached = tileCache.get(name);
-  if (cached) return cached;
-
-  const filePath = path.join(TILE_DIR, name);
-  const promise = readFile(filePath)
-    .then(gunzipAsync)
-    .then((buffer) => JSON.parse(buffer.toString("utf8")) as CctvLocation[])
-    .catch(() => []);
-
-  tileCache.set(name, promise);
-  return promise;
-}
-
 export async function loadNearbyTiles(lat: number, lng: number, radius = 1) {
   const centerLat = Math.floor(lat * TILE_SCALE);
   const centerLng = Math.floor(lng * TILE_SCALE);
@@ -263,7 +245,13 @@ export async function loadNearbyTiles(lat: number, lng: number, radius = 1) {
 
   for (let y = centerLat - radius; y <= centerLat + radius; y += 1) {
     for (let x = centerLng - radius; x <= centerLng + radius; x += 1) {
-      tasks.push(loadTileByName(`t_${y}_${x}.json.gz`));
+      const filePath = path.join(TILE_DIR, `t_${y}_${x}.json.gz`);
+      tasks.push(
+        readFile(filePath)
+          .then(gunzipAsync)
+          .then((buffer) => JSON.parse(buffer.toString("utf8")) as CctvLocation[])
+          .catch(() => [])
+      );
     }
   }
 
@@ -293,7 +281,13 @@ export async function loadCctvsInBounds(bounds: {
 
   for (let y = minLatTile; y <= maxLatTile; y += 1) {
     for (let x = minLngTile; x <= maxLngTile; x += 1) {
-      tasks.push(loadTileByName(`t_${y}_${x}.json.gz`));
+      const filePath = path.join(TILE_DIR, `t_${y}_${x}.json.gz`);
+      tasks.push(
+        readFile(filePath)
+          .then(gunzipAsync)
+          .then((buffer) => JSON.parse(buffer.toString("utf8")) as CctvLocation[])
+          .catch(() => [])
+      );
     }
   }
 
@@ -354,103 +348,6 @@ export async function getNearbyCctvs(target: CctvLocation, limit = 8) {
     }))
     .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0))
     .slice(0, limit);
-}
-
-function splitAddressParts(value = "") {
-  return value.split(/\s+/).filter(Boolean);
-}
-
-function isTownLike(part = "") {
-  return /(?:동|읍|면|가|리)$/.test(part);
-}
-
-function getAddressCandidates(item: CctvLocation) {
-  const detail = item as CctvDetail;
-  const values = [detail.lotAddress, detail.roadAddress, item.address, detail.seoArea].filter(Boolean);
-  const seen = new Set<string>();
-
-  return values
-    .map(splitAddressParts)
-    .filter((parts) => parts.length > 0)
-    .filter((parts) => {
-      const key = parts.join(" ");
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-}
-
-function getBestAddressParts(item: CctvLocation) {
-  const candidates = getAddressCandidates(item);
-  return candidates.find((parts) => parts.some(isTownLike)) ?? candidates[0] ?? [];
-}
-
-function matchesRegion(item: CctvLocation, normalizedParts: string[]) {
-  return getAddressCandidates(item).some((parts) =>
-    normalizedParts.every((part, index) => parts[index] === part)
-  );
-}
-
-export async function getRegionHub(areaParts: string[], sampleLimit = 60) {
-  const normalizedParts = areaParts.map((part) => decodeURIComponent(part)).filter(Boolean);
-  const areaName = normalizedParts.join(" ");
-  const items = await loadCctvItems();
-  const matched = items.filter((item) => matchesRegion(item, normalizedParts));
-
-  if (matched.length === 0) return null;
-
-  const purposeCounts = new Map<string, number>();
-  const childCounts = new Map<string, number>();
-
-  for (const item of matched) {
-    purposeCounts.set(item.purpose, (purposeCounts.get(item.purpose) ?? 0) + 1);
-    const child =
-      getAddressCandidates(item)
-        .map((parts) => parts[normalizedParts.length])
-        .find((part) => normalizedParts.length < 2 || isTownLike(part)) ??
-      getBestAddressParts(item)[normalizedParts.length];
-
-    if (child) {
-      childCounts.set(child, (childCounts.get(child) ?? 0) + 1);
-    }
-  }
-
-  return {
-    areaName,
-    areaParts: normalizedParts,
-    total: matched.length,
-    purposeCounts: Array.from(purposeCounts.entries())
-      .map(([purpose, count]) => ({ purpose, count }))
-      .sort((a, b) => b.count - a.count),
-    childRegions: Array.from(childCounts.entries())
-      .map(([name, count]) => ({
-        name,
-        count,
-        href: `/region/${[...normalizedParts, name].map(encodeURIComponent).join("/")}`
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 80),
-    items: matched.slice(0, sampleLimit)
-  };
-}
-
-export async function getRegionSitemapPaths(limit = 5000) {
-  const items = await loadCctvItems();
-  const paths = new Set<string>();
-
-  for (const item of items) {
-    for (const parts of getAddressCandidates(item)) {
-      if (parts[0]) paths.add(parts[0]);
-      if (parts[0] && parts[1]) paths.add(`${parts[0]}/${parts[1]}`);
-      if (parts[0] && parts[1] && parts[2] && isTownLike(parts[2])) {
-        paths.add(`${parts[0]}/${parts[1]}/${parts[2]}`);
-      }
-      if (paths.size >= limit) break;
-    }
-    if (paths.size >= limit) break;
-  }
-
-  return Array.from(paths);
 }
 
 export { tileName };
