@@ -1,11 +1,11 @@
 :root {
-  --ink: #172026;
-  --muted: #63717b;
-  --line: #d9e1e7;
+  --ink: #132033;
+  --muted: #64748b;
+  --line: #d5e0ee;
   --panel: #ffffff;
-  --soft: #f4f7f9;
-  --accent: #156f78;
-  --accent-strong: #0f5860;
+  --soft: #f3f7fc;
+  --accent: #1d5fd1;
+  --accent-strong: #174aa3;
   --warn: #9a5b12;
 }
 
@@ -62,7 +62,7 @@ input {
 
 .brandIcon {
   align-items: center;
-  background: #dff0ed;
+  background: #e8f1ff;
   border-radius: 8px;
   color: var(--accent);
   display: flex;
@@ -107,7 +107,7 @@ h1 {
 
 .searchBox:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.14);
+  box-shadow: 0 0 0 3px rgba(29, 95, 209, 0.14);
 }
 
 .searchBox input {
@@ -233,7 +233,7 @@ h1 {
 
 .listItem.selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.12);
+  box-shadow: 0 0 0 3px rgba(29, 95, 209, 0.12);
 }
 
 .itemTop {
@@ -244,7 +244,7 @@ h1 {
 }
 
 .itemTop em {
-  background: #eaf4f2;
+  background: #e8f1ff;
   border-radius: 999px;
   color: var(--accent-strong);
   flex: 0 0 auto;
@@ -667,7 +667,7 @@ dd {
 
 .nearbyItem:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(21, 111, 120, 0.1);
+  box-shadow: 0 0 0 3px rgba(29, 95, 209, 0.1);
 }
 
 .nearbyItem strong {
@@ -773,7 +773,7 @@ dd {
   }
 
   .mobilePanelHandle span {
-    background: #c5d0d7;
+    background: #c5d6f4;
     border-radius: 999px;
     height: 4px;
     left: 50%;
