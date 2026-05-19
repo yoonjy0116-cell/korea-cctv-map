@@ -484,42 +484,48 @@ export default function Home() {
 
         <AdsenseAd className="adSlotSidebar" label="검색 패널 광고 영역" />
 
-        <div className="resultHeader">
-          <strong>{loadMode === "search" ? "검색 지도 기준" : "현재 지도 기준"} {filteredLocations.length.toLocaleString()}개</strong>
-          <span>{isDataLoading ? "불러오는 중" : "실시간 영상 제외"}</span>
-        </div>
+        <div className="resultsPanel">
+          <div className="resultHeader">
+            <strong>{loadMode === "search" ? "검색 지도 기준" : "현재 지도 기준"} {filteredLocations.length.toLocaleString()}개</strong>
+            <span>{isDataLoading ? "불러오는 중" : "실시간 영상 제외"}</span>
+          </div>
 
-        <p className="dataMessage">{dataMessage}</p>
+          <p className="dataMessage">{dataMessage}</p>
 
-        <div className="list">
-          {filteredLocations.length === 0 && !isDataLoading && (
-            <div className="emptyState">현재 지도 화면 안에 표시할 CCTV가 없습니다. 지도를 조금 움직이거나 확대해 보세요.</div>
-          )}
-          {filteredLocations.map((item, index) => (
-            <Fragment key={item.id}>
-              {index === 4 && (
-                <AdsenseAd className="adSlotList" label="검색결과 광고 영역" />
-              )}
-              <button
-                className={`listItem ${selected?.id === item.id ? "selected" : ""}`}
-                onClick={() => handleSelect(item)}
-                type="button"
-              >
-                <span className="itemTop">
-                  <strong>{item.name}</strong>
-                  <em>{item.purpose}</em>
-                </span>
-                <small>{item.direction || "촬영방면정보 없음"}</small>
-                {item.source && <small>출처: {item.source}</small>}
-                {typeof item.distance === "number" && <small>지도 중심에서 약 {(item.distance / 1000).toFixed(1)}km</small>}
-                {item.externalUrl && (
-                  <a className="inlineExternalLink" href={item.externalUrl} onClick={(event) => event.stopPropagation()} target="_blank" rel="noreferrer">
-                    실시간 확인 URL
-                  </a>
+          <div
+            className="list"
+            onTouchMove={(event) => event.stopPropagation()}
+            onWheel={(event) => event.stopPropagation()}
+          >
+            {filteredLocations.length === 0 && !isDataLoading && (
+              <div className="emptyState">현재 지도 화면 안에 표시할 CCTV가 없습니다. 지도를 조금 움직이거나 확대해 보세요.</div>
+            )}
+            {filteredLocations.map((item, index) => (
+              <Fragment key={item.id}>
+                {index === 4 && (
+                  <AdsenseAd className="adSlotList" label="검색결과 광고 영역" />
                 )}
-              </button>
-            </Fragment>
-          ))}
+                <button
+                  className={`listItem ${selected?.id === item.id ? "selected" : ""}`}
+                  onClick={() => handleSelect(item)}
+                  type="button"
+                >
+                  <span className="itemTop">
+                    <strong>{item.name}</strong>
+                    <em>{item.purpose}</em>
+                  </span>
+                  <small>{item.direction || "촬영방면정보 없음"}</small>
+                  {item.source && <small>출처: {item.source}</small>}
+                  {typeof item.distance === "number" && <small>지도 중심에서 약 {(item.distance / 1000).toFixed(1)}km</small>}
+                  {item.externalUrl && (
+                    <a className="inlineExternalLink" href={item.externalUrl} onClick={(event) => event.stopPropagation()} target="_blank" rel="noreferrer">
+                      실시간 확인 URL
+                    </a>
+                  )}
+                </button>
+              </Fragment>
+            ))}
+          </div>
         </div>
       </section>
 
