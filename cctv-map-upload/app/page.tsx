@@ -60,14 +60,15 @@ export default function Home() {
   const infoWindowRef = useRef<any | null>(null);
   const panelTouchStartY = useRef<number | null>(null);
   const requestIdRef = useRef(0);
+  const firstDataLoadRef = useRef(true);
   const [locations, setLocations] = useState<CctvLocation[]>(cctvLocations);
   const [keywordInput, setKeywordInput] = useState("");
   const [purpose, setPurpose] = useState<(typeof purposes)[number]>("전체");
   const [selected, setSelected] = useState<CctvLocation | null>(null);
   const [loadMode, setLoadMode] = useState<LoadMode>("nearby");
   const [isMapReady, setIsMapReady] = useState(false);
-  const [isDataLoading, setIsDataLoading] = useState(true);
-  const [dataMessage, setDataMessage] = useState("현재 지도 기준 CCTV를 불러오는 중입니다.");
+  const [isDataLoading, setIsDataLoading] = useState(false);
+  const [dataMessage, setDataMessage] = useState("지도가 먼저 표시된 뒤 현재 화면 기준 CCTV를 불러옵니다.");
   const [mapError, setMapError] = useState("");
   const [locationLabel, setLocationLabel] = useState("서울시청 주변");
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
@@ -167,6 +168,9 @@ export default function Home() {
       if (!kakaoMapRef.current || !window.kakao) return;
       if (timer) window.clearTimeout(timer);
 
+      const delay = firstDataLoadRef.current ? 850 : 260;
+      firstDataLoadRef.current = false;
+
       timer = window.setTimeout(async () => {
         const map = kakaoMapRef.current;
         const mapLevel = map.getLevel();
@@ -252,7 +256,7 @@ export default function Home() {
     };
 
     window.kakao.maps.event.addListener(kakaoMapRef.current, "idle", loadVisibleCctvs);
-    loadVisibleCctvs();
+    window.setTimeout(loadVisibleCctvs, 350);
 
     return () => {
       if (timer) window.clearTimeout(timer);
@@ -306,6 +310,7 @@ export default function Home() {
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    (document.activeElement as HTMLElement | null)?.blur?.();
     const query = keywordInput.trim();
 
     if (!query) {
@@ -389,23 +394,43 @@ export default function Home() {
     markersRef.current.forEach((marker) => marker.setMap(null));
     markersRef.current = [];
 
-    filteredLocations.forEach((item) => {
-      const position = new window.kakao.maps.LatLng(item.lat, item.lng);
-      const marker = new window.kakao.maps.Marker({
-        map: kakaoMapRef.current,
-        position,
-        title: item.name,
-        zIndex: 1
+    let cancelled = false;
+    let index = 0;
+    const chunkSize = 35;
+
+    const drawChunk = () => {
+      if (cancelled || !kakaoMapRef.current || !window.kakao) return;
+      const chunk = filteredLocations.slice(index, index + chunkSize);
+
+      chunk.forEach((item) => {
+        const position = new window.kakao.maps.LatLng(item.lat, item.lng);
+        const marker = new window.kakao.maps.Marker({
+          map: kakaoMapRef.current,
+          position,
+          title: item.name,
+          zIndex: 1
+        });
+
+        window.kakao.maps.event.addListener(marker, "click", () => {
+          marker.setZIndex(20);
+          setSelected(item);
+          openInfoWindow(item, position);
+        });
+
+        markersRef.current.push(marker);
       });
 
-      window.kakao.maps.event.addListener(marker, "click", () => {
-        marker.setZIndex(20);
-        setSelected(item);
-        openInfoWindow(item, position);
-      });
+      index += chunkSize;
+      if (index < filteredLocations.length) {
+        window.requestAnimationFrame(drawChunk);
+      }
+    };
 
-      markersRef.current.push(marker);
-    });
+    window.requestAnimationFrame(drawChunk);
+
+    return () => {
+      cancelled = true;
+    };
   }, [filteredLocations, isMapReady]);
 
   const handleSelect = (item: CctvLocation) => {

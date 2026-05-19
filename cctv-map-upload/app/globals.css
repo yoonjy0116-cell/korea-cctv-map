@@ -43,8 +43,8 @@ input {
 .sidebar {
   background: var(--panel);
   border-right: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
@@ -189,9 +189,10 @@ h1 {
 }
 
 .resultsPanel {
-  display: flex;
-  flex: 1 1 0;
-  flex-direction: column;
+  display: grid;
+  grid-row: 4 / -1;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -218,7 +219,7 @@ h1 {
 }
 
 .list {
-  flex: 1 1 0;
+  height: 100%;
   min-height: 0;
   max-height: 100%;
   overflow-x: hidden;
@@ -843,19 +844,35 @@ dd {
     bottom: 0;
     box-shadow: 0 -18px 35px rgba(23, 32, 38, 0.16);
     left: 0;
-    height: 36dvh;
-    max-height: 36dvh;
+    height: 48svh;
+    max-height: 48svh;
     min-height: 0;
     padding: 8px 14px 14px;
     position: fixed;
     right: 0;
     transition: height 0.2s ease, max-height 0.2s ease;
     z-index: 20;
+    grid-template-rows: auto auto minmax(0, 1fr);
   }
 
   .sidebar.expanded {
-    height: 78dvh;
-    max-height: 78dvh;
+    height: 68svh;
+    max-height: 68svh;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+
+  .resultsPanel {
+    grid-row: 3 / -1;
+  }
+
+  .sidebar.expanded .resultsPanel {
+    grid-row: 4 / -1;
+  }
+
+  .sidebar.collapsed .brand,
+  .sidebar.collapsed .nearbyButton,
+  .sidebar.collapsed .filterBlock {
+    display: none;
   }
 
   .mobilePanelHandle {
@@ -909,6 +926,7 @@ dd {
 
   .controls {
     gap: 10px;
+    min-height: 0;
   }
 
   .nearbyButton {
@@ -958,7 +976,7 @@ dd {
   }
 
   .list {
-    flex: 1 1 0;
+    height: 100%;
     min-height: 110px;
     overflow-y: scroll;
   }
@@ -974,12 +992,14 @@ dd {
 
   .mapArea {
     inset: 0;
+    height: 100svh;
     min-height: 100dvh;
     position: fixed;
     z-index: 1;
   }
 
   .mapCanvas {
+    height: 100svh;
     min-height: 100dvh;
   }
 
@@ -1040,3 +1060,5 @@ dd {
     display: flex;
     flex-direction: column;
     height: auto;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
