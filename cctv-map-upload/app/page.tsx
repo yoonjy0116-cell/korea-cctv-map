@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, FormEvent, TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, FormEvent, TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Cctv, Filter, Loader2, LocateFixed, MapPin, Search } from "lucide-react";
 import { cctvLocations, type CctvLocation } from "../data/cctvLocations";
@@ -19,6 +19,7 @@ const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 const purposes = ["전체", "방범", "교통", "어린이보호", "시설안전", "기타"] as const;
 const ENABLE_TRAFFIC_CCTV = process.env.NEXT_PUBLIC_ENABLE_TRAFFIC_CCTV === "true";
 const MIN_VISIBLE_MAP_LEVEL = 8;
+const KAKAO_MAP_SCRIPT_ID = "kakao-map-sdk";
 
 function getMapStartFromUrl() {
   if (typeof window === "undefined") return null;
@@ -76,6 +77,16 @@ export default function Home() {
 
   const filteredLocations = useMemo(() => locations, [locations]);
 
+  const relayoutMap = useCallback((center?: any) => {
+    if (!kakaoMapRef.current || !window.kakao) return;
+
+    window.requestAnimationFrame(() => {
+      if (!kakaoMapRef.current || !window.kakao) return;
+      kakaoMapRef.current.relayout();
+      if (center) kakaoMapRef.current.setCenter(center);
+    });
+  }, []);
+
   const closeMapInfo = () => {
     infoWindowRef.current?.close();
     setSelected(null);
@@ -108,27 +119,61 @@ export default function Home() {
 
   useEffect(() => {
     const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
+    let isMounted = true;
+
+    const markMapReady = () => {
+      if (!window.kakao?.maps) return;
+
+      const finish = () => {
+        if (!isMounted) return;
+        setMapError("");
+        setIsMapReady(true);
+      };
+
+      if (typeof window.kakao.maps.load === "function") {
+        window.kakao.maps.load(finish);
+        return;
+      }
+
+      finish();
+    };
 
     if (!appKey) {
       setMapError(".env.local 파일에 Kakao JavaScript 키를 입력하면 지도가 표시됩니다.");
-      return;
+      return () => {
+        isMounted = false;
+      };
     }
 
     if (window.kakao?.maps) {
-      setIsMapReady(true);
-      return;
+      markMapReady();
+      return () => {
+        isMounted = false;
+      };
     }
 
-    const script = document.createElement("script");
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false&libraries=services`;
-    script.async = true;
-    script.onload = () => {
-      window.kakao.maps.load(() => setIsMapReady(true));
-    };
-    script.onerror = () => {
+    const existingScript = document.getElementById(KAKAO_MAP_SCRIPT_ID) as HTMLScriptElement | null;
+    const script = existingScript ?? document.createElement("script");
+    const handleError = () => {
+      if (!isMounted) return;
       setMapError("Kakao Map API를 불러오지 못했습니다. 앱 키와 도메인 설정을 확인하세요.");
     };
-    document.head.appendChild(script);
+
+    script.addEventListener("load", markMapReady);
+    script.addEventListener("error", handleError);
+
+    if (!existingScript) {
+      script.id = KAKAO_MAP_SCRIPT_ID;
+      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false&libraries=services`;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      isMounted = false;
+      script.removeEventListener("load", markMapReady);
+      script.removeEventListener("error", handleError);
+    };
   }, []);
 
   useEffect(() => {
@@ -136,26 +181,45 @@ export default function Home() {
 
     const start = getMapStartFromUrl();
     const center = new window.kakao.maps.LatLng(start?.lat ?? SEOUL_CITY_HALL.lat, start?.lng ?? SEOUL_CITY_HALL.lng);
-    kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
-      center,
-      level: 4
-    });
+    let resizeObserver: ResizeObserver | null = null;
+    let cancelled = false;
 
-    [0, 80, 250, 700, 1300].forEach((delay) => {
-      window.setTimeout(() => {
-        if (!kakaoMapRef.current || !window.kakao) return;
-        kakaoMapRef.current.relayout();
-        kakaoMapRef.current.setCenter(center);
-      }, delay);
-    });
+    const createMap = () => {
+      if (cancelled || !mapRef.current || !window.kakao || kakaoMapRef.current) return;
 
-    if (start) {
-      setLoadMode("search");
-      setLocationLabel(start.place);
-    }
+      const rect = mapRef.current.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        window.requestAnimationFrame(createMap);
+        return;
+      }
 
-    window.kakao.maps.event.addListener(kakaoMapRef.current, "click", closeMapInfo);
-  }, [isMapReady]);
+      kakaoMapRef.current = new window.kakao.maps.Map(mapRef.current, {
+        center,
+        level: 4
+      });
+
+      resizeObserver = new ResizeObserver(() => relayoutMap(center));
+      resizeObserver.observe(mapRef.current);
+
+      [0, 80, 250, 700, 1300].forEach((delay) => {
+        window.setTimeout(() => relayoutMap(center), delay);
+      });
+
+      if (start) {
+        setLoadMode("search");
+        setLocationLabel(start.place);
+      }
+
+      window.kakao.maps.event.addListener(kakaoMapRef.current, "click", closeMapInfo);
+    };
+
+    window.requestAnimationFrame(createMap);
+
+    return () => {
+      cancelled = true;
+      resizeObserver?.disconnect();
+    };
+  }, [isMapReady, relayoutMap]);
 
   useEffect(() => {
     if (!isMapReady || !kakaoMapRef.current || !window.kakao) return;
@@ -167,7 +231,7 @@ export default function Home() {
       if (!kakaoMapRef.current || !window.kakao) return;
       if (timer) window.clearTimeout(timer);
 
-      const delay = firstDataLoadRef.current ? 850 : 260;
+      const delay = firstDataLoadRef.current ? 180 : 260;
       firstDataLoadRef.current = false;
 
       timer = window.setTimeout(async () => {
@@ -271,9 +335,10 @@ export default function Home() {
       setLocationLabel("서울시청 주변");
       setLoadMode("nearby");
       if (kakaoMapRef.current && window.kakao) {
-        kakaoMapRef.current.relayout();
         kakaoMapRef.current.setLevel(4);
-        kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng));
+        const center = new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng);
+        kakaoMapRef.current.setCenter(center);
+        relayoutMap(center);
       }
       return;
     }
@@ -290,8 +355,10 @@ export default function Home() {
         if (collapsePanel) setIsPanelExpanded(false);
 
         if (kakaoMapRef.current && window.kakao) {
+          const center = new window.kakao.maps.LatLng(nextCenter.lat, nextCenter.lng);
           kakaoMapRef.current.setLevel(5);
-          kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(nextCenter.lat, nextCenter.lng));
+          kakaoMapRef.current.setCenter(center);
+          relayoutMap(center);
         }
 
       },
@@ -299,8 +366,10 @@ export default function Home() {
         setLoadMode("nearby");
         setLocationLabel("서울시청 주변");
         if (kakaoMapRef.current && window.kakao) {
+          const center = new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng);
           kakaoMapRef.current.setLevel(4);
-          kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng));
+          kakaoMapRef.current.setCenter(center);
+          relayoutMap(center);
         }
       },
       { enableHighAccuracy: false, maximumAge: 1000 * 60 * 10, timeout: 4500 }
@@ -317,8 +386,10 @@ export default function Home() {
       setLocationLabel("서울시청 주변");
       setKeywordInput("");
       if (kakaoMapRef.current && window.kakao) {
+        const center = new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng);
         kakaoMapRef.current.setLevel(4);
-        kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng));
+        kakaoMapRef.current.setCenter(center);
+        relayoutMap(center);
       }
       return;
     }
@@ -337,9 +408,10 @@ export default function Home() {
       setLoadMode("search");
       setLocationLabel(query);
       setIsPanelExpanded(false);
-      kakaoMapRef.current.relayout();
+      const center = new window.kakao.maps.LatLng(lat, lng);
       kakaoMapRef.current.setLevel(level);
-      kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(lat, lng));
+      kakaoMapRef.current.setCenter(center);
+      relayoutMap(center);
     };
 
     const searchByKeyword = () => {

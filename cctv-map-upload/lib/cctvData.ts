@@ -16,6 +16,7 @@ const gunzipAsync = promisify(gunzip);
 
 let rowsCache: Promise<RawCctvRecord[]> | null = null;
 let itemsCache: Promise<CctvDetail[]> | null = null;
+const tileCache = new Map<string, Promise<CctvLocation[]>>();
 
 export type RawCctvRecord = Record<string, string>;
 
@@ -241,6 +242,20 @@ function tileName(lat: number, lng: number) {
   return `t_${Math.floor(lat * TILE_SCALE)}_${Math.floor(lng * TILE_SCALE)}.json.gz`;
 }
 
+function loadTileByName(name: string) {
+  const cached = tileCache.get(name);
+  if (cached) return cached;
+
+  const filePath = path.join(TILE_DIR, name);
+  const promise = readFile(filePath)
+    .then(gunzipAsync)
+    .then((buffer) => JSON.parse(buffer.toString("utf8")) as CctvLocation[])
+    .catch(() => []);
+
+  tileCache.set(name, promise);
+  return promise;
+}
+
 export async function loadNearbyTiles(lat: number, lng: number, radius = 1) {
   const centerLat = Math.floor(lat * TILE_SCALE);
   const centerLng = Math.floor(lng * TILE_SCALE);
@@ -248,13 +263,7 @@ export async function loadNearbyTiles(lat: number, lng: number, radius = 1) {
 
   for (let y = centerLat - radius; y <= centerLat + radius; y += 1) {
     for (let x = centerLng - radius; x <= centerLng + radius; x += 1) {
-      const filePath = path.join(TILE_DIR, `t_${y}_${x}.json.gz`);
-      tasks.push(
-        readFile(filePath)
-          .then(gunzipAsync)
-          .then((buffer) => JSON.parse(buffer.toString("utf8")) as CctvLocation[])
-          .catch(() => [])
-      );
+      tasks.push(loadTileByName(`t_${y}_${x}.json.gz`));
     }
   }
 
@@ -284,13 +293,7 @@ export async function loadCctvsInBounds(bounds: {
 
   for (let y = minLatTile; y <= maxLatTile; y += 1) {
     for (let x = minLngTile; x <= maxLngTile; x += 1) {
-      const filePath = path.join(TILE_DIR, `t_${y}_${x}.json.gz`);
-      tasks.push(
-        readFile(filePath)
-          .then(gunzipAsync)
-          .then((buffer) => JSON.parse(buffer.toString("utf8")) as CctvLocation[])
-          .catch(() => [])
-      );
+      tasks.push(loadTileByName(`t_${y}_${x}.json.gz`));
     }
   }
 
