@@ -44,11 +44,15 @@ input {
   background: var(--panel);
   border-right: 1px solid var(--line);
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
   padding: 24px;
+}
+
+.sidebarTop {
+  min-height: 0;
 }
 
 .mobilePanelHandle {
@@ -190,7 +194,7 @@ h1 {
 
 .resultsPanel {
   display: grid;
-  grid-row: 4 / -1;
+  grid-row: 2 / -1;
   grid-template-rows: auto auto minmax(0, 1fr);
   height: 100%;
   min-height: 0;
@@ -852,26 +856,22 @@ dd {
     right: 0;
     transition: height 0.2s ease, max-height 0.2s ease;
     z-index: 20;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .sidebar.expanded {
     height: 68svh;
     max-height: 68svh;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .resultsPanel {
-    grid-row: 3 / -1;
+    grid-row: 2 / -1;
   }
 
-  .sidebar.expanded .resultsPanel {
-    grid-row: 4 / -1;
-  }
-
-  .sidebar.collapsed .brand,
-  .sidebar.collapsed .nearbyButton,
-  .sidebar.collapsed .filterBlock {
+  .sidebar.collapsed .sidebarTop .brand,
+  .sidebar.collapsed .sidebarTop .nearbyButton,
+  .sidebar.collapsed .sidebarTop .filterBlock {
     display: none;
   }
 

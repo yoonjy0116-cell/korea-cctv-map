@@ -446,67 +446,69 @@ export default function Home() {
   return (
     <main className="page">
       <section className={`sidebar ${isPanelExpanded ? "expanded" : "collapsed"}`} aria-label="CCTV 검색 패널">
-        <button
-          className="mobilePanelHandle"
-          onClick={() => setIsPanelExpanded((value) => !value)}
-          onTouchEnd={handlePanelTouchEnd}
-          onTouchStart={handlePanelTouchStart}
-          type="button"
-        >
-          <span />
-          {isPanelExpanded ? <ChevronDown size={18} aria-hidden="true" /> : <ChevronUp size={18} aria-hidden="true" />}
-          <strong>{isPanelExpanded ? "검색창 내리기" : "검색창 올리기"}</strong>
-        </button>
-
-        <div className="brand">
-          <div className="brandIcon">
-            <Cctv size={24} aria-hidden="true" />
-          </div>
-          <div>
-            <p className="eyebrow">공공데이터 기반</p>
-            <h1>전국 CCTV 지도</h1>
-          </div>
-        </div>
-
-        <form className="controls" onSubmit={handleSearch}>
-          <label className="searchBox">
-            <Search size={18} aria-hidden="true" />
-            <input
-              onFocus={() => setIsPanelExpanded(true)}
-              value={keywordInput}
-              onChange={(event) => setKeywordInput(event.target.value)}
-              placeholder={`예: ${searchPlaceholder}`}
-            />
-            <button className="searchButton" disabled={isDataLoading} type="submit">
-              {isDataLoading ? <Loader2 size={17} aria-hidden="true" /> : "검색"}
-            </button>
-          </label>
-
-          <button className="searchButton nearbyButton" onClick={() => moveToCurrentLocation()} type="button">
-            <LocateFixed size={16} aria-hidden="true" /> 현위치 보기
+        <div className="sidebarTop">
+          <button
+            className="mobilePanelHandle"
+            onClick={() => setIsPanelExpanded((value) => !value)}
+            onTouchEnd={handlePanelTouchEnd}
+            onTouchStart={handlePanelTouchStart}
+            type="button"
+          >
+            <span />
+            {isPanelExpanded ? <ChevronDown size={18} aria-hidden="true" /> : <ChevronUp size={18} aria-hidden="true" />}
+            <strong>{isPanelExpanded ? "검색창 내리기" : "검색창 올리기"}</strong>
           </button>
 
-          <div className="filterBlock">
-            <div className="filterTitle">
-              <Filter size={17} aria-hidden="true" />
-              <span>목적 필터</span>
+          <div className="brand">
+            <div className="brandIcon">
+              <Cctv size={24} aria-hidden="true" />
             </div>
-            <div className="purposeGrid">
-              {purposes.map((item) => (
-                <button
-                  className={purpose === item ? "active" : ""}
-                  key={item}
-                  onClick={() => setPurpose(item)}
-                  type="button"
-                >
-                  {item}
-                </button>
-              ))}
+            <div>
+              <p className="eyebrow">공공데이터 기반</p>
+              <h1>전국 CCTV 지도</h1>
             </div>
           </div>
-        </form>
 
-        <AdsenseAd className="adSlotSidebar" label="검색 패널 광고 영역" />
+          <form className="controls" onSubmit={handleSearch}>
+            <label className="searchBox">
+              <Search size={18} aria-hidden="true" />
+              <input
+                onFocus={() => setIsPanelExpanded(true)}
+                value={keywordInput}
+                onChange={(event) => setKeywordInput(event.target.value)}
+                placeholder={`예: ${searchPlaceholder}`}
+              />
+              <button className="searchButton" disabled={isDataLoading} type="submit">
+                {isDataLoading ? <Loader2 size={17} aria-hidden="true" /> : "검색"}
+              </button>
+            </label>
+
+            <button className="searchButton nearbyButton" onClick={() => moveToCurrentLocation()} type="button">
+              <LocateFixed size={16} aria-hidden="true" /> 현위치 보기
+            </button>
+
+            <div className="filterBlock">
+              <div className="filterTitle">
+                <Filter size={17} aria-hidden="true" />
+                <span>목적 필터</span>
+              </div>
+              <div className="purposeGrid">
+                {purposes.map((item) => (
+                  <button
+                    className={purpose === item ? "active" : ""}
+                    key={item}
+                    onClick={() => setPurpose(item)}
+                    type="button"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </form>
+
+          <AdsenseAd className="adSlotSidebar" label="검색 패널 광고 영역" />
+        </div>
 
         <div className="resultsPanel">
           <div className="resultHeader">
