@@ -391,6 +391,17 @@ export async function getRegionSummary(area: string) {
   return summaries.find((summary) => summary.area === normalizedArea) ?? null;
 }
 
+export async function getBestRegionSummary(area: string) {
+  const parts = getRegionPathParts(area);
+
+  for (let length = parts.length; length >= 1; length -= 1) {
+    const summary = await getRegionSummary(parts.slice(0, length).join(" "));
+    if (summary) return summary;
+  }
+
+  return null;
+}
+
 export async function getCctvsByRegion(area: string, limit = 80) {
   const normalizedArea = normalizeArea(area);
   const items = await loadCctvItems();

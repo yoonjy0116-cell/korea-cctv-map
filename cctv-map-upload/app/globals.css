@@ -662,10 +662,10 @@ dd {
   color: var(--accent);
   display: inline-flex;
   flex: 0 0 auto;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: 40px;
+  padding: 0 16px;
   text-decoration: none;
 }
 
