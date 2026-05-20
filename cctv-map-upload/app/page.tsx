@@ -340,6 +340,17 @@ export default function Home() {
   };
 
   const stopPanelWheel = (event: WheelEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    const list = target.closest(".list") as HTMLElement | null;
+
+    if (list && list.scrollHeight > list.clientHeight) {
+      event.preventDefault();
+      event.stopPropagation();
+      list.scrollTop += event.deltaY;
+      return;
+    }
+
+    event.preventDefault();
     event.stopPropagation();
   };
 
