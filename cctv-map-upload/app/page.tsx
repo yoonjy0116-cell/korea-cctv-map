@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, TouchEvent, WheelEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Cctv, Filter, Loader2, LocateFixed, MapPin, Search } from "lucide-react";
 import { cctvLocations, type CctvLocation } from "../data/cctvLocations";
@@ -339,9 +339,17 @@ export default function Home() {
     openInfoWindow(item, position);
   };
 
+  const stopPanelWheel = (event: WheelEvent<HTMLElement>) => {
+    event.stopPropagation();
+  };
+
   return (
     <main className="page">
-      <section className={`sidebar ${isPanelExpanded ? "expanded" : "collapsed"}`} aria-label="CCTV 검색 패널">
+      <section
+        className={`sidebar ${isPanelExpanded ? "expanded" : "collapsed"}`}
+        aria-label="CCTV 검색 패널"
+        onWheelCapture={stopPanelWheel}
+      >
         <button
           className="mobilePanelHandle"
           onClick={() => setIsPanelExpanded((value) => !value)}
