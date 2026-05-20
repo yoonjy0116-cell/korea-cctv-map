@@ -248,17 +248,24 @@ export default function Home() {
     );
   };
 
-  useEffect(() => {
-    if (!isMapReady || !kakaoMapRef.current) return;
-    moveToCurrentLocation(false);
-  }, [isMapReady]);
+  const moveToSeoulCityHall = () => {
+    setLoadMode("nearby");
+    setLocationLabel("서울시청 주변");
+    setKeywordInput("");
+    setIsPanelExpanded(false);
+
+    if (kakaoMapRef.current && window.kakao) {
+      kakaoMapRef.current.setLevel(5);
+      kakaoMapRef.current.setCenter(new window.kakao.maps.LatLng(SEOUL_CITY_HALL.lat, SEOUL_CITY_HALL.lng));
+    }
+  };
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const query = keywordInput.trim();
 
     if (!query) {
-      moveToCurrentLocation();
+      moveToSeoulCityHall();
       return;
     }
 

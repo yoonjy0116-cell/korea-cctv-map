@@ -9,8 +9,8 @@ import {
 export const runtime = "nodejs";
 export const revalidate = 86400;
 
-const MAX_RESULTS = 500;
-const MAX_NEARBY_RESULTS = 160;
+const MAX_RESULTS = 150;
+const MAX_NEARBY_RESULTS = 100;
 
 function toNumber(value: string | null) {
   const numberValue = Number(value);
