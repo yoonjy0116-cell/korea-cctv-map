@@ -16,6 +16,7 @@ const gunzipAsync = promisify(gunzip);
 
 let rowsCache: Promise<RawCctvRecord[]> | null = null;
 let itemsCache: Promise<CctvDetail[]> | null = null;
+let regionSummariesCache: Promise<RegionSummary[]> | null = null;
 
 export type RawCctvRecord = Record<string, string>;
 
@@ -34,6 +35,13 @@ export type CctvDetail = CctvLocation & {
   dataDate: string;
   updatedAt: string;
   raw?: RawCctvRecord;
+};
+
+export type RegionSummary = {
+  area: string;
+  path: string[];
+  count: number;
+  purposes: Record<string, number>;
 };
 
 export function parseCsv(text: string) {
@@ -335,6 +343,60 @@ export async function getCctvPageSlugs(offset = 0, limit = 50000) {
 export async function countCctvRows() {
   const items = await loadCctvItems();
   return items.length;
+}
+
+function getRegionPathParts(area: string) {
+  return normalizeArea(area).split(/\s+/).filter(Boolean);
+}
+
+function addRegionSummary(map: Map<string, RegionSummary>, item: CctvDetail, parts: string[]) {
+  if (parts.length === 0) return;
+
+  const area = parts.join(" ");
+  const current = map.get(area) ?? {
+    area,
+    path: parts,
+    count: 0,
+    purposes: {}
+  };
+
+  current.count += 1;
+  current.purposes[item.purpose] = (current.purposes[item.purpose] ?? 0) + 1;
+  map.set(area, current);
+}
+
+export async function getRegionSummaries(limit = 5000) {
+  if (!regionSummariesCache) {
+    regionSummariesCache = loadCctvItems().then((items) => {
+      const map = new Map<string, RegionSummary>();
+
+      for (const item of items) {
+        const parts = getRegionPathParts(item.seoArea || item.region || item.address);
+        addRegionSummary(map, item, parts.slice(0, 2));
+        addRegionSummary(map, item, parts.slice(0, 3));
+      }
+
+      return Array.from(map.values()).sort((a, b) => b.count - a.count || a.area.localeCompare(b.area, "ko"));
+    });
+  }
+
+  const summaries = await regionSummariesCache;
+  return summaries.slice(0, limit);
+}
+
+export async function getRegionSummary(area: string) {
+  const normalizedArea = normalizeArea(area);
+  const summaries = await getRegionSummaries();
+  return summaries.find((summary) => summary.area === normalizedArea) ?? null;
+}
+
+export async function getCctvsByRegion(area: string, limit = 80) {
+  const normalizedArea = normalizeArea(area);
+  const items = await loadCctvItems();
+
+  return items
+    .filter((item) => normalizeArea(item.seoArea || item.region || item.address).startsWith(normalizedArea))
+    .slice(0, limit);
 }
 
 export async function getNearbyCctvs(target: CctvLocation, limit = 8) {

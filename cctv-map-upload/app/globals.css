@@ -655,6 +655,13 @@ dd {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.regionStats {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
 .nearbyItem {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -898,6 +905,7 @@ dd {
 
   .detailGrid,
   .rawGrid,
+  .regionStats,
   .nearbyList {
     grid-template-columns: 1fr;
   }
