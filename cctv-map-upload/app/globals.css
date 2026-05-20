@@ -681,6 +681,23 @@ dd {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.regionLinkGroup {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.regionLinkGroup > strong {
+  color: var(--accent-strong);
+  font-size: 14px;
+}
+
+.regionLinkGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .regionStats {
   display: grid;
   gap: 12px;
@@ -932,6 +949,7 @@ dd {
   .detailGrid,
   .rawGrid,
   .regionStats,
+  .regionLinkGrid,
   .nearbyList {
     grid-template-columns: 1fr;
   }

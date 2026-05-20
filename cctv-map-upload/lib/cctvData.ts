@@ -372,6 +372,7 @@ export async function getRegionSummaries(limit = 5000) {
 
       for (const item of items) {
         const parts = getRegionPathParts(item.seoArea || item.region || item.address);
+        addRegionSummary(map, item, parts.slice(0, 1));
         addRegionSummary(map, item, parts.slice(0, 2));
         addRegionSummary(map, item, parts.slice(0, 3));
       }
