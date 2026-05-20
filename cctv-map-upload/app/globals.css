@@ -643,6 +643,32 @@ dd {
   margin: 0 0 8px;
 }
 
+.nearbyBlockHeader {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.nearbyBlockHeader h2 {
+  margin: 0;
+}
+
+.nearbyHubLink {
+  align-items: center;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 34px;
+  padding: 0 12px;
+  text-decoration: none;
+}
+
 .nearbyBlock p {
   color: #36464f;
   line-height: 1.65;
@@ -921,6 +947,16 @@ dd {
 
   .detailActionPrimary,
   .detailActionSecondary {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .nearbyBlockHeader {
+    align-items: stretch;
+    display: grid;
+  }
+
+  .nearbyHubLink {
     justify-content: center;
     width: 100%;
   }

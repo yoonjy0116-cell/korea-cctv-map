@@ -73,6 +73,8 @@ export default async function CctvDetailPage({ params }: Props) {
   const pageUrl = `https://cctv.idlun.com/cctv/${encodeURIComponent(item.slug)}`;
   const title = item.seoTitle;
   const nearbyCctvs = await getNearbyCctvs(item, 8);
+  const mapHref = `/?lat=${item.lat}&lng=${item.lng}&place=${encodeURIComponent(item.seoArea)}`;
+  const regionHref = `/region/${item.seoArea.split(/\s+/).filter(Boolean).map(encodeURIComponent).join("/")}`;
   const description = `${item.address}에 등록된 CCTV 위치와 관리 정보를 공공데이터 기준으로 정리한 상세 페이지입니다.`;
   const structuredData = {
     "@context": "https://schema.org",
@@ -132,6 +134,10 @@ export default async function CctvDetailPage({ params }: Props) {
               <FileText size={17} aria-hidden="true" />
               CCTV 열람 신청
             </Link>
+            <Link className="detailActionSecondary" href={mapHref}>
+              <MapPin size={17} aria-hidden="true" />
+              지도 바로가기
+            </Link>
           </div>
         </section>
 
@@ -172,7 +178,12 @@ export default async function CctvDetailPage({ params }: Props) {
         </aside>
 
         <section className="nearbyBlock" aria-label="주변 CCTV 리스트">
-          <h2>주변 CCTV</h2>
+          <div className="nearbyBlockHeader">
+            <h2>주변 CCTV</h2>
+            <Link className="nearbyHubLink" href={regionHref}>
+              {item.seoArea} 허브페이지
+            </Link>
+          </div>
           <p>{item.address} 근처에 등록된 CCTV 위치 정보입니다.</p>
           <div className="nearbyList">
             {nearbyCctvs.map((nearby) => (
