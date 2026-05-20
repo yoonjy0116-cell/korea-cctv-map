@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, MapPin } from "lucide-react";
 
 import AdsenseAd from "../../components/AdsenseAd";
+import PolicyLinks from "../../components/PolicyLinks";
 import {
   getCctvsByRegion,
   getRegionSummaries,
@@ -275,6 +276,8 @@ export default async function RegionPage({ params }: Props) {
             </li>
           </ul>
         </section>
+
+        <PolicyLinks />
       </div>
     </main>
   );

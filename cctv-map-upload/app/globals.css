@@ -771,6 +771,39 @@ dd {
   gap: 4px;
 }
 
+.policyLinks {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 8px 14px;
+  justify-content: center;
+  margin-top: 18px;
+  padding: 4px 0;
+}
+
+.policyLinks a {
+  align-items: center;
+  color: var(--muted);
+  display: inline-flex;
+  gap: 4px;
+  text-decoration: none;
+}
+
+.policyLinks a:hover {
+  color: var(--accent);
+}
+
+.policyLinksCompact {
+  border-top: 1px solid var(--line);
+  flex: 0 0 auto;
+  font-size: 12px;
+  justify-content: flex-start;
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
 .detailGrid,
 .rawGrid {
   display: grid;

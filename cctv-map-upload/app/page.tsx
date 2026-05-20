@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, ChevronUp, Cctv, Filter, Loader2, LocateFixed, MapPin, Search } from "lucide-react";
 import { cctvLocations, type CctvLocation } from "../data/cctvLocations";
 import AdsenseAd from "./components/AdsenseAd";
+import PolicyLinks from "./components/PolicyLinks";
 
 type KakaoMap = any;
 type LoadMode = "nearby" | "search" | "viewport";
@@ -463,6 +464,8 @@ export default function Home() {
             </button>
           ))}
         </div>
+
+        <PolicyLinks compact />
       </section>
 
       <section className="mapArea" aria-label="지도 영역">

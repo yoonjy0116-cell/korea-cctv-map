@@ -14,6 +14,16 @@ const pages = [
     path: "/cctv-request",
     priority: "0.8",
     changefreq: "monthly"
+  },
+  {
+    path: "/privacy",
+    priority: "0.5",
+    changefreq: "monthly"
+  },
+  {
+    path: "/terms",
+    priority: "0.5",
+    changefreq: "monthly"
   }
 ];
 

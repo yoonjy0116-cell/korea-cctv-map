@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Download, ExternalLink, FileText } from "lucide-react";
 
+import PolicyLinks from "../components/PolicyLinks";
+
 const requestFileUrl = "/downloads/personal-video-info-request.hwp";
 
 export const metadata: Metadata = {
@@ -147,6 +149,8 @@ export default function CctvRequestPage() {
             </li>
           </ul>
         </section>
+
+        <PolicyLinks />
       </div>
     </main>
   );

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, FileText, MapPin } from "lucide-react";
 
 import AdsenseAd from "../../components/AdsenseAd";
+import PolicyLinks from "../../components/PolicyLinks";
 import { findCctvByManagementNumber, getBestRegionSummary, getNearbyCctvs } from "../../../lib/cctvData";
 
 type Props = {
@@ -216,6 +217,8 @@ export default async function CctvDetailPage({ params }: Props) {
             </li>
           </ul>
         </section>
+
+        <PolicyLinks />
       </div>
     </main>
   );
