@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, FileText, MapPin } from "lucide-react";
 
+import AdsenseAd from "../../components/AdsenseAd";
 import { findCctvByManagementNumber, getBestRegionSummary, getNearbyCctvs } from "../../../lib/cctvData";
 
 type Props = {
@@ -143,9 +144,7 @@ export default async function CctvDetailPage({ params }: Props) {
           </div>
         </section>
 
-        <aside className="adSlot adSlotDetailTop" aria-label="상단 광고 영역">
-          광고 영역
-        </aside>
+        <AdsenseAd className="adSlotDetailTop" label="CCTV 상세 상단 광고 영역" />
 
         <section className="seoTextBlock" aria-label={`${item.seoArea} CCTV 안내`}>
           <h2>{item.seoArea} CCTV 안내</h2>
@@ -175,9 +174,7 @@ export default async function CctvDetailPage({ params }: Props) {
           </dl>
         </section>
 
-        <aside className="adSlot adSlotDetailMiddle" aria-label="본문 광고 영역">
-          광고 영역
-        </aside>
+        <AdsenseAd className="adSlotDetailMiddle" label="CCTV 상세 본문 광고 영역" />
 
         <section className="nearbyBlock" aria-label="주변 CCTV 리스트">
           <div className="nearbyBlockHeader">

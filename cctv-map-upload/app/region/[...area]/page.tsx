@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MapPin } from "lucide-react";
 
+import AdsenseAd from "../../components/AdsenseAd";
 import {
   getCctvsByRegion,
   getRegionSummaries,
@@ -167,6 +168,8 @@ export default async function RegionPage({ params }: Props) {
           </div>
         </section>
 
+        <AdsenseAd className="adSlotDetailTop" label="지역 허브 상단 광고 영역" />
+
         <section className="seoTextBlock" aria-label={`${summary.area} CCTV 검색 안내`}>
           <h2>{summary.area} CCTV 검색 안내</h2>
           <p>{copy.guide}</p>
@@ -192,6 +195,8 @@ export default async function RegionPage({ params }: Props) {
             </div>
           </dl>
         </section>
+
+        <AdsenseAd className="adSlotDetailMiddle" label="지역 허브 본문 광고 영역" />
 
         <section className="nearbyBlock" aria-label="관련 지역 CCTV 링크">
           <h2>관련 지역 CCTV</h2>

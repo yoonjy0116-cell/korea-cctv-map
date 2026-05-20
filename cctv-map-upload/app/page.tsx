@@ -4,6 +4,7 @@ import { FormEvent, TouchEvent, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Cctv, Filter, Loader2, LocateFixed, MapPin, Search } from "lucide-react";
 import { cctvLocations, type CctvLocation } from "../data/cctvLocations";
+import AdsenseAd from "./components/AdsenseAd";
 
 type KakaoMap = any;
 type LoadMode = "nearby" | "search" | "viewport";
@@ -401,9 +402,7 @@ export default function Home() {
           </div>
         </form>
 
-        <aside className="adSlot adSlotSidebar" aria-label="광고 영역">
-          광고 영역
-        </aside>
+        <AdsenseAd className="adSlotSidebar" label="검색 패널 광고 영역" />
 
         <div className="resultHeader">
           <strong>{loadMode === "search" ? "검색 지도 기준" : "현재 지도 기준"} {filteredLocations.length.toLocaleString()}개</strong>
