@@ -23,6 +23,53 @@ function formatDistance(distance?: number) {
   return `약 ${(distance / 1000).toFixed(1)}km`;
 }
 
+function variantIndex(value: string, size: number) {
+  let hash = 0;
+  for (const char of value) {
+    hash = (hash * 31 + char.charCodeAt(0)) % 9973;
+  }
+  return hash % size;
+}
+
+function getPurposePhrase(purpose: string) {
+  if (purpose === "방범") return "방범 CCTV 위치 확인, 생활안전, 사고 발생 지점 확인";
+  if (purpose === "교통") return "교통 CCTV 위치 확인, 도로 주변 CCTV 검색, 교통 상황 확인";
+  if (purpose === "어린이보호") return "어린이보호 CCTV 위치 확인, 통학로와 보호구역 주변 안전 확인";
+  if (purpose === "시설안전") return "시설안전 CCTV 위치 확인, 공공시설과 주변 안전 관리 확인";
+  return "CCTV 위치 확인, 주변 CCTV 검색, 관리기관 정보 확인";
+}
+
+function getDetailCopy(item: {
+  address: string;
+  seoArea: string;
+  purpose: string;
+  cameraCount: number;
+  manager: string;
+  direction?: string;
+}) {
+  const direction = item.direction || "촬영방면정보가 원본 데이터에 별도로 등록되어 있지 않습니다";
+  const phrase = getPurposePhrase(item.purpose);
+  const variants = [
+    {
+      heading: `${item.seoArea} ${item.purpose} CCTV 확인`,
+      body: `${item.address}에 등록된 이 CCTV는 ${item.purpose} 목적의 공공데이터 항목입니다. ${phrase}이 필요한 경우 주소, 촬영방면정보, 관리기관을 먼저 확인해 보세요.`,
+      note: `촬영방면정보는 ${direction}이며, 카메라는 ${item.cameraCount.toLocaleString()}대로 등록되어 있습니다. 관리기관은 ${item.manager}입니다.`
+    },
+    {
+      heading: `${item.seoArea} CCTV 위치와 관리 정보`,
+      body: `${item.seoArea} 주변 CCTV를 찾는 사용자를 위해 ${item.address} CCTV의 설치목적과 관리 정보를 정리했습니다. 이 페이지는 CCTV 보기 전 위치 확인과 열람 신청 준비에 참고할 수 있습니다.`,
+      note: `${item.purpose} CCTV로 분류되어 있으며, 촬영방면정보는 ${direction}입니다. 실제 영상 열람 가능 여부는 관리기관 절차에 따라 달라집니다.`
+    },
+    {
+      heading: `${item.address} CCTV 상세 안내`,
+      body: `${item.address} CCTV 위치를 확인하려는 경우 설치목적, 카메라대수, 촬영방면정보를 함께 보는 것이 좋습니다. 공공데이터 기준 관리기관은 ${item.manager}입니다.`,
+      note: `이 사이트는 실시간 CCTV 영상을 제공하지 않고, ${item.seoArea} CCTV 위치와 관리 정보 확인을 돕는 참고용 페이지입니다.`
+    }
+  ];
+
+  return variants[variantIndex(`${item.address}-${item.manager}-${item.purpose}`, variants.length)];
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const item = await findCctvByManagementNumber(decodeURIComponent(id));
@@ -37,8 +84,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = `${item.seoArea} CCTV 위치 정보`;
+  const copy = getDetailCopy(item);
   const description = compact(
-    `${item.address} CCTV 위치, 설치목적, 촬영방면정보, 카메라대수, 관리기관 정보를 공공데이터 기준으로 확인할 수 있습니다. 실시간 영상은 제공하지 않습니다.`
+    `${copy.body} 실시간 영상은 제공하지 않습니다.`
   );
 
   return {
@@ -48,8 +96,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${item.seoArea} CCTV`,
       `${item.seoArea} CCTV 위치`,
       `${item.seoArea} 방범 CCTV`,
+      `${item.seoArea} ${item.purpose} CCTV`,
+      `${item.seoArea} CCTV 열람`,
       `${item.address} CCTV`,
       `${item.address} CCTV 위치`,
+      `${item.address} CCTV 확인`,
       "전국 CCTV 지도",
       "공공데이터 CCTV"
     ],
@@ -79,6 +130,7 @@ export default async function CctvDetailPage({ params }: Props) {
   const mapHref = `/?lat=${item.lat}&lng=${item.lng}&place=${encodeURIComponent(item.seoArea)}`;
   const regionHref = regionSummary ? `/region/${regionSummary.path.map(encodeURIComponent).join("/")}` : "/";
   const regionLabel = regionSummary?.area ?? item.seoArea;
+  const detailCopy = getDetailCopy(item);
   const description = `${item.address}에 등록된 CCTV 위치와 관리 정보를 공공데이터 기준으로 정리한 상세 페이지입니다.`;
   const structuredData = {
     "@context": "https://schema.org",
@@ -148,12 +200,9 @@ export default async function CctvDetailPage({ params }: Props) {
         <AdsenseAd className="adSlotDetailTop" label="CCTV 상세 상단 광고 영역" />
 
         <section className="seoTextBlock" aria-label={`${item.seoArea} CCTV 안내`}>
-          <h2>{item.seoArea} CCTV 안내</h2>
-          <p>
-            이 페이지는 {item.seoArea} 주변 CCTV 위치를 찾는 사용자가 주소와 관리 정보를
-            빠르게 확인할 수 있도록 만든 상세 정보 페이지입니다. 등록 주소는
-            <strong> {item.address}</strong>이며, 설치목적은 <strong>{item.purpose}</strong>입니다.
-          </p>
+          <h2>{detailCopy.heading}</h2>
+          <p>{detailCopy.body}</p>
+          <p>{detailCopy.note}</p>
           <p>
             CCTV 영상 열람이 필요한 경우에는 해당 CCTV를 관리하는 기관의 절차에 따라 신청해야 합니다.
             이 사이트는 실시간 영상이나 녹화 영상을 제공하지 않으며, 위치 확인과 관리 정보 안내를 목적으로 합니다.

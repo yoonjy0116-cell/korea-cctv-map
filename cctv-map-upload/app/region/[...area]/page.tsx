@@ -34,6 +34,37 @@ function formatPurposes(purposes: Record<string, number>) {
     .join(", ");
 }
 
+function getPurposeEntries(summary: RegionSummary) {
+  return ["방범", "교통", "어린이보호", "시설안전", "기타"]
+    .map((purpose) => ({
+      purpose,
+      count: summary.purposes[purpose] ?? 0
+    }))
+    .filter((item) => item.count > 0);
+}
+
+function getPurposeDescription(area: string, purpose: string, count: number) {
+  const countText = count.toLocaleString();
+
+  if (purpose === "방범") {
+    return `${area} 방범 CCTV는 생활안전, 범죄 예방, 사고 발생 위치 확인을 위해 참고할 수 있는 공개 위치 정보입니다. 현재 공공데이터 기준 ${countText}개가 등록되어 있습니다.`;
+  }
+
+  if (purpose === "교통") {
+    return `${area} 교통 CCTV는 도로 주변 위치 확인이나 교통 관련 CCTV 검색에 활용할 수 있습니다. 실시간 영상 제공 여부는 별도 관리기관 또는 교통정보 제공처를 확인해야 합니다.`;
+  }
+
+  if (purpose === "어린이보호") {
+    return `${area} 어린이보호 CCTV는 학교 주변, 어린이보호구역, 통학로 CCTV 위치를 찾는 경우에 참고할 수 있습니다.`;
+  }
+
+  if (purpose === "시설안전") {
+    return `${area} 시설안전 CCTV는 공공시설, 공원, 하천, 주요 시설 주변의 안전 관리를 목적으로 등록된 CCTV 위치 정보입니다.`;
+  }
+
+  return `${area} 기타 목적 CCTV는 원본 공공데이터의 설치목적 분류가 세부적으로 다르거나 통합 관리되는 항목입니다. 상세페이지에서 주소와 촬영방면정보를 확인할 수 있습니다.`;
+}
+
 function variantIndex(value: string, size: number) {
   let hash = 0;
   for (const char of value) {
@@ -118,6 +149,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${summary.area} CCTV 열람`,
       `${summary.area} 방범 CCTV`,
       `${summary.area} 교통 CCTV`,
+      `${summary.area} 어린이보호 CCTV`,
+      `${summary.area} 시설안전 CCTV`,
+      `${summary.area} 사고 CCTV 확인`,
+      `${summary.area} CCTV 확인 방법`,
       "CCTV 열람 방법",
       "전국 CCTV 지도"
     ],
@@ -148,6 +183,7 @@ export default async function RegionPage({ params }: Props) {
   const copy = getRegionCopy(summary);
   const related = getRelatedRegions(summary, regions);
   const mapHref = `/?q=${encodeURIComponent(summary.area)}`;
+  const purposeEntries = getPurposeEntries(summary);
 
   return (
     <main className="detailPage">
@@ -178,6 +214,38 @@ export default async function RegionPage({ params }: Props) {
             CCTV 영상을 직접 보는 서비스는 아니며, CCTV 열람 신청이나 사고 확인이 필요한 경우
             관리기관에 문의하기 전 위치, 주소, 설치목적, 촬영방면정보를 확인하는 용도로 활용할 수 있습니다.
           </p>
+        </section>
+
+        <section className="seoTextBlock" aria-label={`${summary.area} 목적별 CCTV 안내`}>
+          <h2>{summary.area} 목적별 CCTV 안내</h2>
+          <p>
+            {summary.area} CCTV를 찾는 사용자는 방범 CCTV, 교통 CCTV, 어린이보호 CCTV,
+            시설안전 CCTV처럼 설치목적에 따라 필요한 정보가 다를 수 있습니다. 아래 내용은
+            공공데이터에 등록된 목적별 현황을 기준으로 정리한 안내입니다.
+          </p>
+          <div className="purposeSeoGrid">
+            {purposeEntries.map((item) => (
+              <article className="purposeSeoCard" key={item.purpose}>
+                <strong>{summary.area} {item.purpose} CCTV</strong>
+                <span>{item.count.toLocaleString()}개</span>
+                <p>{getPurposeDescription(summary.area, item.purpose, item.count)}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="seoTextBlock" aria-label={`${summary.area} CCTV 열람 및 확인 안내`}>
+          <h2>{summary.area} CCTV 열람 신청 전 확인사항</h2>
+          <p>
+            {summary.area}에서 사고, 분실물, 차량 접촉, 생활 민원 등으로 CCTV 확인이 필요한 경우에는
+            먼저 주변 CCTV 위치와 관리기관 정보를 확인하는 것이 좋습니다. CCTV 영상 열람은 본인 확인,
+            사건 관련성, 보관기간, 관리기관 심사에 따라 가능 여부가 달라질 수 있습니다.
+          </p>
+          <ul className="intentList">
+            <li>{summary.area} CCTV 위치를 확인한 뒤 상세페이지에서 관리기관과 촬영방면정보를 확인하세요.</li>
+            <li>{summary.area} 방범 CCTV 또는 어린이보호 CCTV는 설치목적과 주소를 함께 확인하는 것이 좋습니다.</li>
+            <li>실시간 CCTV 보기 기능은 제공하지 않으며, 영상 열람은 정보공개포털 또는 관리기관 절차를 이용해야 합니다.</li>
+          </ul>
         </section>
 
         <section className="detailGridBlock" aria-label={`${summary.area} CCTV 요약`}>

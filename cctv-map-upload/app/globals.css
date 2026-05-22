@@ -566,6 +566,51 @@ dd {
   margin-top: 4px;
 }
 
+.purposeSeoGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.purposeSeoCard {
+  background: #f7fbff;
+  border: 1px solid #d7e7fb;
+  border-radius: 8px;
+  display: grid;
+  gap: 7px;
+  padding: 14px;
+}
+
+.purposeSeoCard strong {
+  color: var(--accent-strong);
+  line-height: 1.4;
+}
+
+.purposeSeoCard span {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.purposeSeoCard p {
+  color: #36464f;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.intentList {
+  color: #36464f;
+  line-height: 1.7;
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.intentList li + li {
+  margin-top: 5px;
+}
+
 .detailActions {
   display: flex;
   flex-wrap: wrap;
@@ -1002,6 +1047,7 @@ dd {
   .rawGrid,
   .regionStats,
   .regionLinkGrid,
+  .purposeSeoGrid,
   .nearbyList {
     grid-template-columns: 1fr;
   }
