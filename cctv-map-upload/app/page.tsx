@@ -25,20 +25,6 @@ declare global {
 
 const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 const purposes = ["전체", "방범", "어린이보호", "교통", "시설안전"] as const;
-const mainRegionLinks = [
-  ["서울특별시 CCTV", ["서울특별시"]],
-  ["서울특별시 강남구 CCTV", ["서울특별시", "강남구"]],
-  ["서울특별시 중구 CCTV", ["서울특별시", "중구"]],
-  ["부산광역시 CCTV", ["부산광역시"]],
-  ["부산광역시 해운대구 CCTV", ["부산광역시", "해운대구"]],
-  ["인천광역시 연수구 CCTV", ["인천광역시", "연수구"]],
-  ["대구광역시 중구 CCTV", ["대구광역시", "중구"]],
-  ["대전광역시 서구 CCTV", ["대전광역시", "서구"]],
-  ["세종특별자치시 CCTV", ["세종특별자치시"]],
-  ["경기도 수원시 CCTV", ["경기도", "수원시"]],
-  ["경기도 성남시 CCTV", ["경기도", "성남시"]],
-  ["제주특별자치도 CCTV", ["제주특별자치도"]]
-] as const;
 
 function escapeHtml(value = "") {
   return value
@@ -517,18 +503,6 @@ export default function Home() {
         </div>
 
         <p className="dataMessage">{dataMessage}</p>
-
-        <nav className="mainRegionLinks" aria-label="주요 지역 CCTV 링크">
-          <strong>주요 지역 CCTV</strong>
-          <div>
-            {mainRegionLinks.map(([label, parts]) => (
-              <Link href={`/region/${parts.map(encodeURIComponent).join("/")}`} key={label}>
-                {label}
-              </Link>
-            ))}
-            <Link href="/cctv-request">CCTV 열람 신청 방법</Link>
-          </div>
-        </nav>
 
         <div className="list">
           {filteredLocations.length === 0 && !isDataLoading && (
