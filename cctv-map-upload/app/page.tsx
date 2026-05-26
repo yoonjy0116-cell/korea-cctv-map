@@ -57,6 +57,7 @@ export default function Home() {
   const [regionTree, setRegionTree] = useState<RegionNode[]>([]);
   const [isRegionTreeLoading, setIsRegionTreeLoading] = useState(false);
   const [regionTreeError, setRegionTreeError] = useState("");
+  const [openRegionAreas, setOpenRegionAreas] = useState<Record<string, boolean>>({});
 
   const filteredLocations = useMemo(() => locations, [locations]);
 
@@ -397,9 +398,17 @@ export default function Home() {
 
   const regionPathHref = (parts: string[]) => `/region/${parts.map(encodeURIComponent).join("/")}`;
 
+  const toggleRegionArea = (area: string) => {
+    setOpenRegionAreas((current) => ({
+      ...current,
+      [area]: !current[area]
+    }));
+  };
+
   const renderRegionNode = (node: RegionNode, depth = 0) => {
     const hasChildren = node.children.length > 0;
     const title = `${node.area} CCTV`;
+    const isOpen = Boolean(openRegionAreas[node.area]);
 
     if (!hasChildren) {
       return (
@@ -414,16 +423,21 @@ export default function Home() {
 
     return (
       <li className={`regionTreeItem depth${depth}`} key={node.area}>
-        <details>
-          <summary>
+        <div className="regionTreeRow">
+          <button
+            aria-expanded={isOpen}
+            aria-label={`${title} 하위 지역 ${isOpen ? "닫기" : "열기"}`}
+            onClick={() => toggleRegionArea(node.area)}
+            type="button"
+          >
             <ChevronRight size={15} aria-hidden="true" />
-            <Link href={regionPathHref(node.path)} onClick={(event) => event.stopPropagation()}>
-              {title}
-            </Link>
-            <span>{node.count.toLocaleString()}개</span>
-          </summary>
-          <ul>{node.children.map((child) => renderRegionNode(child, depth + 1))}</ul>
-        </details>
+          </button>
+          <Link href={regionPathHref(node.path)} onClick={() => setIsRegionDrawerOpen(false)}>
+            {title}
+          </Link>
+          <span>{node.count.toLocaleString()}개</span>
+        </div>
+        {isOpen && <ul>{node.children.map((child) => renderRegionNode(child, depth + 1))}</ul>}
       </li>
     );
   };
