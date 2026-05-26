@@ -209,6 +209,44 @@ h1 {
   margin-bottom: 12px;
 }
 
+.mainRegionLinks {
+  border: 1px solid #d7e7fb;
+  border-radius: 8px;
+  background: #f7fbff;
+  display: grid;
+  flex: 0 0 auto;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+}
+
+.mainRegionLinks strong {
+  color: var(--accent-strong);
+  font-size: 13px;
+}
+
+.mainRegionLinks div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.mainRegionLinks a {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  padding: 6px 9px;
+  text-decoration: none;
+}
+
+.mainRegionLinks a:hover {
+  border-color: var(--accent);
+}
+
 .list {
   display: grid;
   flex: 1 1 auto;
