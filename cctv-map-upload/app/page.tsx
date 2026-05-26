@@ -2,13 +2,20 @@
 
 import { FormEvent, TouchEvent, WheelEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Cctv, Filter, Loader2, LocateFixed, MapPin, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp, Cctv, Filter, Loader2, LocateFixed, MapPin, PanelRightOpen, Search, X } from "lucide-react";
 import { cctvLocations, type CctvLocation } from "../data/cctvLocations";
 import AdsenseAd from "./components/AdsenseAd";
 import PolicyLinks from "./components/PolicyLinks";
 
 type KakaoMap = any;
 type LoadMode = "nearby" | "search" | "viewport";
+type RegionNode = {
+  name: string;
+  area: string;
+  path: string[];
+  count: number;
+  children: RegionNode[];
+};
 
 declare global {
   interface Window {
@@ -60,8 +67,34 @@ export default function Home() {
   const [mapError, setMapError] = useState("");
   const [locationLabel, setLocationLabel] = useState("서울시청 주변");
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+  const [isRegionDrawerOpen, setIsRegionDrawerOpen] = useState(false);
+  const [regionTree, setRegionTree] = useState<RegionNode[]>([]);
+  const [isRegionTreeLoading, setIsRegionTreeLoading] = useState(false);
+  const [regionTreeError, setRegionTreeError] = useState("");
 
   const filteredLocations = useMemo(() => locations, [locations]);
+
+  useEffect(() => {
+    if (!isRegionDrawerOpen || regionTree.length > 0 || isRegionTreeLoading) return;
+
+    setIsRegionTreeLoading(true);
+    setRegionTreeError("");
+
+    fetch("/api/regions")
+      .then((response) => {
+        if (!response.ok) throw new Error("지역 데이터를 불러오지 못했습니다.");
+        return response.json();
+      })
+      .then((data) => {
+        setRegionTree(data.items ?? []);
+      })
+      .catch(() => {
+        setRegionTreeError("지역 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      })
+      .finally(() => {
+        setIsRegionTreeLoading(false);
+      });
+  }, [isRegionDrawerOpen, isRegionTreeLoading, regionTree.length]);
 
   const closeMapInfo = () => {
     infoWindowRef.current?.close();
@@ -376,6 +409,39 @@ export default function Home() {
     event.stopPropagation();
   };
 
+  const regionPathHref = (parts: string[]) => `/region/${parts.map(encodeURIComponent).join("/")}`;
+
+  const renderRegionNode = (node: RegionNode, depth = 0) => {
+    const hasChildren = node.children.length > 0;
+    const title = `${node.area} CCTV`;
+
+    if (!hasChildren) {
+      return (
+        <li className={`regionTreeItem depth${depth}`} key={node.area}>
+          <Link href={regionPathHref(node.path)} onClick={() => setIsRegionDrawerOpen(false)}>
+            {title}
+            <span>{node.count.toLocaleString()}개</span>
+          </Link>
+        </li>
+      );
+    }
+
+    return (
+      <li className={`regionTreeItem depth${depth}`} key={node.area}>
+        <details>
+          <summary>
+            <ChevronRight size={15} aria-hidden="true" />
+            <Link href={regionPathHref(node.path)} onClick={(event) => event.stopPropagation()}>
+              {title}
+            </Link>
+            <span>{node.count.toLocaleString()}개</span>
+          </summary>
+          <ul>{node.children.map((child) => renderRegionNode(child, depth + 1))}</ul>
+        </details>
+      </li>
+    );
+  };
+
   return (
     <main className="page">
       <section
@@ -496,6 +562,10 @@ export default function Home() {
 
       <section className="mapArea" aria-label="지도 영역">
         <div ref={mapRef} className="mapCanvas" />
+        <button className="regionDrawerButton" onClick={() => setIsRegionDrawerOpen(true)} type="button">
+          <PanelRightOpen size={17} aria-hidden="true" />
+          전국 지역
+        </button>
         <button className="mapLocateButton" onClick={() => moveToCurrentLocation()} type="button">
           <LocateFixed size={17} aria-hidden="true" />
           현위치
@@ -543,6 +613,30 @@ export default function Home() {
               <a className="detailLink detailExternalLink" href={selected.externalUrl} target="_blank" rel="noreferrer">
                 실시간 확인 URL
               </a>
+            )}
+          </aside>
+        )}
+
+        {isRegionDrawerOpen && (
+          <aside className="regionDrawer" aria-label="전국 지역별 CCTV 탐색">
+            <div className="regionDrawerHeader">
+              <div>
+                <p className="eyebrow">전국 지역별 CCTV</p>
+                <h2>지역 탐색</h2>
+              </div>
+              <button onClick={() => setIsRegionDrawerOpen(false)} type="button" aria-label="지역 탐색 닫기">
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <p className="regionDrawerIntro">
+              시도, 시군구, 읍면동 순서로 펼쳐서 지역별 CCTV 위치 페이지로 이동할 수 있습니다.
+            </p>
+            {isRegionTreeLoading && <p className="regionDrawerState">지역 목록을 불러오는 중입니다.</p>}
+            {regionTreeError && <p className="regionDrawerState">{regionTreeError}</p>}
+            {!isRegionTreeLoading && !regionTreeError && (
+              <ul className="regionTree">
+                {regionTree.map((node) => renderRegionNode(node))}
+              </ul>
             )}
           </aside>
         )}
