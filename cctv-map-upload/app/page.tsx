@@ -554,6 +554,9 @@ export default function Home() {
           <PanelRightOpen size={17} aria-hidden="true" />
           전국 지역
         </button>
+        <Link className="regionIndexButton" href="/regions">
+          지역 전체보기
+        </Link>
         <button className="mapLocateButton" onClick={() => moveToCurrentLocation()} type="button">
           <LocateFixed size={17} aria-hidden="true" />
           현위치

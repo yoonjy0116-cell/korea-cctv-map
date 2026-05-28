@@ -16,6 +16,11 @@ const pages = [
     changefreq: "monthly"
   },
   {
+    path: "/regions",
+    priority: "0.9",
+    changefreq: "weekly"
+  },
+  {
     path: "/privacy",
     priority: "0.5",
     changefreq: "monthly"

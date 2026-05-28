@@ -419,6 +419,30 @@ h1 {
   border-color: var(--accent);
 }
 
+.regionIndexButton {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.2);
+  color: #fff;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  justify-content: center;
+  line-height: 1;
+  min-height: 40px;
+  padding: 0 14px;
+  position: absolute;
+  right: 132px;
+  text-decoration: none;
+  top: 16px;
+  z-index: 10;
+}
+
+.regionIndexButton:hover {
+  background: #1d4ed8;
+}
+
 .mapNotice {
   align-items: center;
   background: #fff;
@@ -1013,6 +1037,178 @@ dd {
   padding-top: 10px;
 }
 
+.regionIndexPage {
+  background: #f6f9fc;
+  color: var(--text);
+  min-height: 100dvh;
+  padding: 40px 20px 64px;
+}
+
+.regionIndexHero,
+.regionIndexSummary,
+.regionIndexContent {
+  margin: 0 auto;
+  max-width: 1120px;
+}
+
+.regionIndexHero {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 32px;
+}
+
+.regionIndexHero h1 {
+  font-size: 34px;
+  margin: 8px 0 12px;
+}
+
+.regionIndexHero p {
+  color: var(--muted);
+  line-height: 1.75;
+  margin: 0;
+  max-width: 760px;
+}
+
+.regionIndexActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.regionIndexActions a {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 8px;
+  color: #fff;
+  display: inline-flex;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
+.regionIndexActions a + a {
+  background: #eef5ff;
+  color: var(--accent);
+}
+
+.regionIndexSummary {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.regionIndexSummary div {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.regionIndexSummary strong {
+  display: block;
+  font-size: 26px;
+}
+
+.regionIndexSummary span {
+  color: var(--muted);
+  display: block;
+  margin-top: 4px;
+}
+
+.regionIndexContent {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 28px;
+}
+
+.regionIndexContent h2 {
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+
+.regionIndexContent > p {
+  color: var(--muted);
+  line-height: 1.65;
+  margin: 0 0 18px;
+}
+
+.regionIndexTree,
+.regionIndexTree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.regionIndexTree {
+  columns: 2;
+  column-gap: 18px;
+}
+
+.regionIndexItem {
+  break-inside: avoid;
+  margin-bottom: 8px;
+}
+
+.regionIndexItem.depth1,
+.regionIndexItem.depth2 {
+  margin-left: 14px;
+}
+
+.regionIndexDetails {
+  border: 1px solid #dbe6f0;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+}
+
+.regionIndexDetails summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.regionIndexDetails summary a {
+  color: var(--text);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.regionIndexDetails summary span,
+.regionIndexLink em {
+  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.regionIndexDetails ul {
+  margin-top: 8px;
+}
+
+.regionIndexLink {
+  align-items: center;
+  border-radius: 8px;
+  color: var(--text);
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.regionIndexLink:hover,
+.regionIndexDetails summary a:hover {
+  color: var(--accent);
+}
+
 .detailGrid,
 .rawGrid {
   display: grid;
@@ -1195,6 +1391,13 @@ dd {
     top: 60px;
   }
 
+  .regionIndexButton {
+    font-size: 13px;
+    min-height: 36px;
+    right: 110px;
+    top: 60px;
+  }
+
   .regionDrawer {
     border-radius: 14px 14px 0 0;
     bottom: 0;
@@ -1258,6 +1461,27 @@ dd {
   .nearbyHubLink {
     justify-content: center;
     width: 100%;
+  }
+
+  .regionIndexPage {
+    padding: 18px 12px 36px;
+  }
+
+  .regionIndexHero,
+  .regionIndexContent {
+    padding: 20px;
+  }
+
+  .regionIndexHero h1 {
+    font-size: 26px;
+  }
+
+  .regionIndexSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .regionIndexTree {
+    columns: 1;
   }
 
   .requestStep {
